@@ -1,0 +1,4 @@
+/Users/omeed/CLionProjects/Chess/cmake-build-debug/CMakeFiles/glad.dir
+/Users/omeed/CLionProjects/Chess/cmake-build-debug/CMakeFiles/Chess.dir
+/Users/omeed/CLionProjects/Chess/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/omeed/CLionProjects/Chess/cmake-build-debug/CMakeFiles/rebuild_cache.dir
