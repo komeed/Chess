@@ -4,25 +4,15 @@
 
 #include "rectangle.h"
 
-static void draw_opengl_shape(Rectangle rect, SizeInt windowSize);
+#include "renderer.h"
+
+static void draw_opengl_shape(float vertices[], unsigned int indices[]);
 
 void draw_rectangle(Rectangle rect, SizeInt windowSize, ShaderBuffers shaderBuffers) {
     glUseProgram(shaderBuffers.rectShaderProgram);
-    draw_opengl_shape(rect, windowSize);
-}
 
-static void draw_opengl_shape(Rectangle rect, SizeInt windowSize) {
-    // Convert from pixel coordinates to Normalized Device Coordinates (-1 to 1)
-    float left = (float)rect.x;
-    float right = (float)(rect.x + rect.width);
-    float bottom = (float)rect.y;
-    float top = (float)(rect.y + rect.height);
-    if (!rect.is_ndc) {
-        left   =  (float)rect.x / windowSize.width  * 2.0f - 1.0f;
-        right  = ((float)(rect.x + rect.width) / windowSize.width) * 2.0f - 1.0f;
-        bottom =  (float)rect.y / windowSize.height * 2.0f - 1.0f;
-        top    = ((float)(rect.y + rect.height) / windowSize.height) * 2.0f - 1.0f;
-    }
+    float left, right, bottom, top;
+    compute_ndc_for_rect(rect, windowSize, &left, &right, &bottom, &top);
 
     float vertices[] = {
         left,  bottom,  // bottom-left
@@ -36,6 +26,10 @@ static void draw_opengl_shape(Rectangle rect, SizeInt windowSize) {
         2, 3, 0   // second triangle
     };
 
+    draw_opengl_shape(vertices, indices);
+}
+
+static void draw_opengl_shape(float vertices[], unsigned int indices[]) {
     unsigned int VAO, VBO, EBO;
     if (!glGenVertexArrays) {
         fprintf(stderr, "glGenVertexArrays is NULL!\n");

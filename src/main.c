@@ -23,12 +23,15 @@ int main(void) {
 #endif
 
     // Create a windowed mode window and its OpenGL context
-    GLFWwindow* window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "GLFW Window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(BOX_LENGTH, BOX_LENGTH, "GLFW Window", NULL, NULL);
     if (!window) {
         fprintf(stderr, "Failed to create GLFW window\n");
         glfwTerminate();
         return -1;
     }
+
+    glfwSetWindowSizeLimits(window, BOX_LENGTH, BOX_LENGTH,
+                        GLFW_DONT_CARE, GLFW_DONT_CARE);
     // Make the window's context current
     glfwMakeContextCurrent(window);
 
@@ -46,16 +49,23 @@ int main(void) {
 
     ShaderBuffers shaders = init_shaders();
 
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    RenderQueue queue = {0};
+    init_render_queue(&queue, 10, (SizeInt){fbWidth, fbHeight}); // temporarily 10 commands
+    Rectangle rect = {.x = 0, .y = 0, .width = fbWidth,
+        .height = fbHeight, .color = (Color) {255, 255, 255}, false};
+    add_rect_to_queue(&queue, rect, shaders.rectShaderProgram);
+
     // Main loop
     while (!glfwWindowShouldClose(window)) {
         // Clear the screen (optional but common)
         glClear(GL_COLOR_BUFFER_BIT);
-        int fbWidth, fbHeight;
+
         glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-        int len = MIN(fbWidth, fbHeight);
-        Rectangle rect = {(fbWidth-len)/2, (fbHeight-len)/2, len, len, false};
-        draw_rectangle(rect,
-            (SizeInt) {fbWidth, fbHeight}, shaders);
+        fbWidth /= 2;
+        fbHeight /= 2;
+        render(&queue, (SizeInt) {fbWidth, fbHeight});
         // Swap front and back buffers
         glfwSwapBuffers(window);
 

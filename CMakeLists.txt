@@ -8,10 +8,12 @@ find_package(glfw3 CONFIG REQUIRED)
 # GLAD
 add_library(glad STATIC
         external/glad/src/glad.c
-)
+) #hi
 target_include_directories(glad PUBLIC
         external/glad/include
 )
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -g -O0")
 
 add_executable(Chess
         src/main.c

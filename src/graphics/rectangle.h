@@ -9,10 +9,11 @@
 #include <stdbool.h>
 
 typedef struct Rectangle {
-    int x;
-    int y;
-    int width;
-    int height;
+    float x;
+    float y;
+    float width;
+    float height;
+    Color color;
     bool is_ndc;
 } Rectangle;
 
