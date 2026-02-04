@@ -1,5 +1,11 @@
 # ninja log v6
-1	114	1770175404068673227	build.ninja	4a5689f9e54d4ea8
+45	64	1770186378403538262	libglad.a	b7c6eb171cd6ab5
+2	36	1770186378360522555	CMakeFiles/Chess.dir/src/graphics/rectangle.c.o	1ff60e8603d08cb8
+2	43	1770186108811491228	CMakeFiles/Chess.dir/src/utils/files.c.o	5ad94b90f7d32ba5
+2	45	1770186378360151387	CMakeFiles/glad.dir/external/glad/src/glad.c.o	dea678312c7d3a9b
+2	38	1770186378360392388	CMakeFiles/Chess.dir/src/main.c.o	c724334dcab96966
+64	92	1770186378422949359	Chess	bdd9e50644dedbfc
+2	36	1770186378360855889	CMakeFiles/Chess.dir/src/shader/shader.c.o	c12200384087875b
 0	22	1770174032378083652	CMakeFiles/Chess.dir/main.c.o	7807d191423b5c56
-38	67	1770175227801550538	Chess	49447a1154cc444a
-1	38	1770175227763678774	CMakeFiles/Chess.dir/src/main.c.o	ced5dcb55f636ace
+2	43	1770186108811699895	CMakeFiles/Chess.dir/src/utils/errorhandler.c.o	f29851f17be20f45
+1	114	1770187122815012062	build.ninja	4a5689f9e54d4ea8
