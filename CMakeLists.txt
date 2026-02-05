@@ -11,6 +11,7 @@ add_library(glad STATIC
 ) #hi
 target_include_directories(glad PUBLIC
         external/glad/include
+        external/
 )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -g -O0")
@@ -29,6 +30,8 @@ add_executable(Chess
         src/utils/util_structs.h
         src/graphics/renderer.h
         src/graphics/renderer.c
+        src/graphics/image.h
+        src/graphics/image.c
 )
 
 # Add Address Sanitizer flags for Debug and RelWithDebInfo configurations

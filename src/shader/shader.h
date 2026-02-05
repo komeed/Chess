@@ -9,10 +9,11 @@
 
 typedef struct ShaderBuffers {
     unsigned int rectShaderProgram;
+    unsigned int imageShaderProgram;
 } ShaderBuffers;
 
 ShaderBuffers init_shaders();
 
-unsigned int init_rect_shader();
+unsigned int init_shader_from_path(const char* vertexPath, const char* fragmentPath);
 
 #endif //SHADER_H

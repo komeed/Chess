@@ -7,13 +7,14 @@
 
 ShaderBuffers init_shaders() {
     ShaderBuffers shaders;
-    shaders.rectShaderProgram = init_rect_shader();
+    shaders.rectShaderProgram = init_shader_from_path("shaders/rect.vert", "shaders/rect.frag");
+    shaders.imageShaderProgram = init_shader_from_path("shaders/image.vert", "shaders/image.frag");
     return shaders;
 }
 
-unsigned int init_rect_shader() {
-    char* vertexSource = read_file("shaders/rect.vert");
-    char* fragmentSource = read_file("shaders/rect.frag");
+unsigned int init_shader_from_path(const char* vertexPath, const char* fragmentPath) {
+    char* vertexSource = read_file(vertexPath);
+    char* fragmentSource = read_file(fragmentPath);
     // 1. Create shaders
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexSource, NULL);

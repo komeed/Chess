@@ -9,14 +9,16 @@
 
 #include "graphic_libs.h"
 #include "rectangle.h"
-
-#define BOX_LENGTH 600
+#include "image.h"
 
 typedef struct RenderCommand {
     GLuint shaderProgram;
     GLuint VAO;
     GLuint indexCount;
     Color color;
+
+    bool hasTexture;
+    GLuint texture;
 } RenderCommand;
 
 typedef struct RenderQueue {
@@ -26,18 +28,24 @@ typedef struct RenderQueue {
     SizeInt windowSize;
 } RenderQueue;
 
-void init_render_queue(RenderQueue* q, size_t capacity, SizeInt windowSize);
+void init_rq(RenderQueue* q, size_t capacity, SizeInt windowSize);
 
-void push_render_queue(RenderQueue* q, RenderCommand command);
+void push_rq(RenderQueue* q, RenderCommand command);
+void push_shape_to_rq(RenderQueue* q, float* vertices, size_t vertices_size, unsigned int* indices, size_t indices_size, Color color, GLuint shaderProgram);
 
-void clear_render_queue(RenderQueue* q);
+void clear_rq(RenderQueue* q);
 
-void free_render_queue(RenderQueue* q);
+void free_rq(RenderQueue* q);
 
-RenderCommand* render_queue_get(RenderQueue* q, int index);
+RenderCommand* get_rq(RenderQueue* q, int index);
 
 void render(RenderQueue* q, SizeInt windowSize);
 
-void add_rect_to_queue(RenderQueue *q, const Rectangle rect, const GLuint shaderProgram);
+void add_rect_to_rq(RenderQueue *q, const Rectangle rect, const GLuint shaderProgram);
+void add_rects_to_rq(RenderQueue *q, Rectangle rects[], size_t rect_size, Color color, unsigned int shaderProgram);
+
+void add_tiles_to_rq(RenderQueue *q, GLuint shaderProgram);
+
+void add_image_to_rq(RenderQueue *q, Image *image, const GLuint shaderProgram);
 
 #endif //RENDERER_H

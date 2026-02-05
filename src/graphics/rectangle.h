@@ -8,15 +8,34 @@
 #include "../utils/errorhandler.h"
 #include <stdbool.h>
 
+#define BOX_LENGTH 700
+#define WINDOW_WIDTH 700
+#define WINDOW_HEIGHT 800
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 typedef struct Rectangle {
     float x;
     float y;
     float width;
     float height;
-    Color color;
     bool is_ndc;
 } Rectangle;
 
+Rectangle create_rectangle_centered_at(float x, float y, float width, float height, bool is_ndc);
+
 void draw_rectangle(Rectangle rect, SizeInt windowSize, ShaderBuffers shaderBuffers);
+
+Rectangle rect_array_get(Rectangle rects[], size_t rect_size, size_t index);
+
+void compute_ndc_for_rect(Rectangle rect, SizeInt windowSize, float* left, float* right, float* bottom, float* top);
+
+typedef struct {
+    Rectangle white_tiles[32];
+    Color white_color;
+    Rectangle black_tiles[32];
+    Color black_color;
+} Tiles;
+
+Tiles create_tiles(SizeInt windowSize);
 
 #endif //RECTANGLE_H
