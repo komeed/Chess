@@ -57,7 +57,8 @@ void push_rq(RenderQueue* q, RenderCommand command) {
     q->size++;
 }
 
-void push_shape_to_rq(RenderQueue* q, float* vertices, size_t vertices_size, unsigned int* indices, size_t indices_size, Color color) {
+void push_shape_to_rq(RenderQueue* q, float* vertices, size_t vertices_size, unsigned int* indices,
+    size_t indices_size, Color color, bool is_switch) {
     unsigned int VAO, VBO, EBO;
     if (!glGenVertexArrays) {
         fprintf(stderr, "glGenVertexArrays is NULL!\n");
@@ -79,7 +80,7 @@ void push_shape_to_rq(RenderQueue* q, float* vertices, size_t vertices_size, uns
     glEnableVertexAttribArray(0);
 
     RenderCommand command = {.shader_program = q->rect_sp, .VAO = VAO, .ind_count = indices_size,
-    .color = color, .has_tex = false, .texture = 0};
+    .color = color, .is_switch = is_switch};
     push_rq(q, command);
 }
 
@@ -121,20 +122,9 @@ void render_board(RenderQueue *q, GLFWwindow* window, f_point scale) {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             Piece* piece = &q->board->board[i][j];
-            if (piece->type != Blank) {
+            if (piece->type != Blank && piece != q->board->held_piece) {
                 float y = (i + 0.07f) / 4.0f;
                 float x = (j - 0.07f) / 4.0f;
-                if (piece == q->board->held_piece) {
-                    int8_t row, col;
-                    double xd, yd;
-                    glfwGetCursorPos(window, &xd, &yd);
-                    get_board_pos(q, xd, yd, &row, &col);
-                    if (row < 0 || col < 0 || row >= 8 || col >= 8) {
-
-                    }
-                    y = (row + 0.07f) / 4.0f;
-                    x = (col - 0.07f) / 4.0f;
-                }
                 //printf("path: %s for x: %.2f, y: %.2f", print_piece_path(cmd->piece->type), x, y);
 
                 glUseProgram(q->image_sp);
@@ -154,11 +144,36 @@ void render_board(RenderQueue *q, GLFWwindow* window, f_point scale) {
             }
         }
     }
+    Piece* piece = q->board->held_piece;
+    if (piece) { // draw the held one last
+        int8_t row, col;
+        double xd, yd;
+        glfwGetCursorPos(window, &xd, &yd);
+        get_board_pos(q, xd, yd, &row, &col);
+        float y = (row + 0.07f) / 4.0f;
+        float x = (col - 0.07f) / 4.0f;
+
+        glUseProgram(q->image_sp);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, piece->texture);
+
+        glUniform1i(glGetUniformLocation(q->image_sp, "uTexture"), 0);
+
+        glUniform2f(glGetUniformLocation(q->image_sp, "uPos"),
+            x, y);
+
+        glUniform2f(glGetUniformLocation(q->image_sp, "uScale"),
+            scale.x, scale.y);
+
+        glBindVertexArray(piece->VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    }
 }
 
 //assumes that all commands already initialized with vao
 void render(RenderQueue* q, GLFWwindow* window) {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     if (q == NULL) {
         throw_exception(NULL_POINTER, "RenderQueue is NULL");
         return;
@@ -181,62 +196,39 @@ void render(RenderQueue* q, GLFWwindow* window) {
     //float scaleX = 1;
     //float scaleY = 1;
     q->new_box_len = newBoxLen;
+    int vertexScaleLocation = glGetUniformLocation(q->rect_sp, "uScale");
+    int fragColorLocation = glGetUniformLocation(q->rect_sp, "uColor");
+    int vertexPosLocation = glGetUniformLocation(q->rect_sp, "uPos");
     for (int i = 0; i < q->size; i++) {
         RenderCommand* cmd = get_rq(q, i);
         if (!cmd) {
             throw_exception(NULL_POINTER, "command is NULL");
             return;
         }
-        if (cmd->has_tex) { // if image
-            if (cmd->piece != NULL) { // if is chess piece
-                float y = (cmd->piece->pos.x + 0.07f) / 4.0f;
-                float x = (cmd->piece->pos.y - 0.07f) / 4.0f;
-                if (cmd->piece == q->board->held_piece) {
-                    int8_t row, col;
-                    double xd, yd;
-                    glfwGetCursorPos(window, &xd, &yd);
-                    get_board_pos(q, xd, yd, &row, &col);
-                    y = (row + 0.07f) / 4.0f;
-                    x = (col - 0.07f) / 4.0f;
-                }
-                //printf("path: %s for x: %.2f, y: %.2f", print_piece_path(cmd->piece->type), x, y);
 
-                glUseProgram(cmd->shader_program);
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, cmd->texture);
-
-                glUniform1i(glGetUniformLocation(cmd->shader_program, "uTexture"), 0);
-
-                glUniform2f(glGetUniformLocation(cmd->shader_program, "uPos"),
-                    x, y);
-
-                glUniform2f(glGetUniformLocation(cmd->shader_program, "uScale"),
-                    scaleX, scaleY);
-
-                glBindVertexArray(cmd->VAO);
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glUseProgram(cmd->shader_program);
+        glUniform3f(fragColorLocation, cmd->color.r/255.0f, cmd->color.g/255.0f, cmd->color.b/255.0f);
+        glUniform2f(vertexScaleLocation, scaleX, scaleY);
+        if (cmd->is_switch == true) {
+            GLfloat offset = 0;
+            if (!q->board->is_bottom_turn) {
+                offset = 1.0f;
             }
-            else {
-                fprintf(stderr, "piece is null!");
-            }
-        } else {
-            int vertexScaleLocation = glGetUniformLocation(cmd->shader_program, "uScale");
-            int fragColorLocation   = glGetUniformLocation(cmd->shader_program, "uColor");
-
-            glUseProgram(cmd->shader_program);
-            glUniform3f(fragColorLocation, cmd->color.r/255.0f, cmd->color.g/255.0f, cmd->color.b/255.0f);
-            glUniform2f(vertexScaleLocation, scaleX, scaleY);
-            // Bind the vertex array
-            glBindVertexArray(cmd->VAO);
-            // Draw elements
-            glDrawElements(GL_TRIANGLES, cmd->ind_count, GL_UNSIGNED_INT, 0);
+            glUniform2f(vertexPosLocation, 0.0f, offset);
         }
+        else {
+            glUniform2f(vertexPosLocation, 0.0f, 0);
+        }
+        // Bind the vertex array
+        glBindVertexArray(cmd->VAO);
+        // Draw elements
+        glDrawElements(GL_TRIANGLES, cmd->ind_count, GL_UNSIGNED_INT, 0);
     }
     render_board(q, window, (f_point) {scaleX, scaleY});
 }
 
 //based on default 800x800 frame (scale appropriately
-void add_rect_to_rq(RenderQueue *q, const Rectangle rect) {
+void add_rect_to_rq(RenderQueue *q, const Rectangle rect, Color color, bool is_switch) {
     // Convert from pixel coordinates to Normalized Device Coordinates (-1 to 1)
     if (q == NULL) {
         throw_exception(NULL_POINTER, "RenderQueue is NULL");
@@ -258,7 +250,7 @@ void add_rect_to_rq(RenderQueue *q, const Rectangle rect) {
         0, 1, 2,  // first triangle
         2, 3, 0   // second triangle
     };
-    push_shape_to_rq(q, vertices, 8, indices, 6, (Color) {255, 255, 255});
+    push_shape_to_rq(q, vertices, 8, indices, 6, color, is_switch);
 
     // Draw rectangle
    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -310,7 +302,7 @@ void add_rects_to_rq(RenderQueue *q, Rectangle rects[], size_t rect_size, Color 
 
         indices_index += 6;
     }
-    push_shape_to_rq(q, vertices, vertices_size, indices, indices_size, color);
+    push_shape_to_rq(q, vertices, vertices_size, indices, indices_size, color, false);
     // after we're done, free eveything
     SAFE_FREE(vertices);
     SAFE_FREE(indices);
@@ -432,7 +424,7 @@ void add_board_to_rq(RenderQueue *q, Board *board) {
                 return;
             }
             if (piece->type != Blank) {
-                char* path = print_piece_path(piece->type);
+                char* path = print_piece_path(piece->type, piece->color);
                 if (path[0] == '\0') {
                     throw_exception(NULL_POINTER, "piece is invalid");
                     return;
@@ -443,6 +435,8 @@ void add_board_to_rq(RenderQueue *q, Board *board) {
             }
         }
     }
+    Rectangle switch_rect = {-MARGIN, 0, MARGIN, q->window_size.height/2, false};
+    add_rect_to_rq(q, switch_rect, (Color) {0, 255, 0}, true);
 }
 
 void get_board_pos(RenderQueue *q, double x, double y, int8_t* row, int8_t* col) {
@@ -484,7 +478,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         get_board_pos(queue, xpos, ypos, &row, &col);
         Piece* piece = &queue->board->board[row][col];
         queue->board->held_piece = piece;
-        queue->board->last_click_loc = (i8_point) {row, col};
+        queue->board->last_click_loc = (board_point) {row, col};
     }
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
         RenderQueue* queue = glfwGetWindowUserPointer(window);
@@ -505,39 +499,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             //if (row )
             Piece* piece = &queue->board->board[row][col];
 
-            //do all the processing here! for now, just set it there
-            queue->board->board[row][col] = *held_piece;
-            i8_point new_loc = (i8_point) {row, col};
-            queue->board->board[row][col].pos = new_loc;
-            i8_point last_click_loc = queue->board->last_click_loc;
-            queue->board->board[last_click_loc.x][last_click_loc.y].type = Blank;
-            queue->board->last_click_loc = new_loc;
-            queue->board->held_piece = NULL;
+            //first check if valid move
+            board_point new_loc = (board_point) {row, col};
+            board_point last_click_loc = queue->board->last_click_loc;
+            move_piece_on_board(queue->board, last_click_loc, new_loc);
         }
-    }
-}
-
-void poll_left_click(GLFWwindow* window, RenderQueue *q) {
-    RenderQueue* queue = glfwGetWindowUserPointer(window);
-    if (!queue ) {
-        throw_exception(NULL_POINTER, "queue is NULL!");
-        return;
-    }
-    if (!queue->board) {
-        throw_exception(NULL_POINTER, "board is NULL!");
-        return;
-    }
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-    int8_t row, col;
-    get_board_pos(queue, xpos, ypos, &row, &col);
-    Piece* piece = &queue->board->board[row][col];
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        piece->pos = (i8_point) {row, col};
-        piece->is_pressed = true;
-        printf("updated pos");
-    }
-    else {
-        piece->is_pressed = false;
     }
 }

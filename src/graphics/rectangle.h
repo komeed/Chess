@@ -8,9 +8,9 @@
 #include "../utils/errorhandler.h"
 #include <stdbool.h>
 
-#define BOX_LENGTH 700
-#define WINDOW_WIDTH 700
-#define WINDOW_HEIGHT 800
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 700
+#define MARGIN 50
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 typedef struct Rectangle {

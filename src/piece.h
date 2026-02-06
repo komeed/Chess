@@ -10,14 +10,23 @@
 #include "stdbool.h"
 #include "graphics/graphic_libs.h"
 
+typedef struct board_point {
+    int8_t row;
+    int8_t col;
+} board_point;
+
 typedef struct {
     PieceType type;
-    i8_point pos;
-    bool is_pressed;
+    Color color;
+    board_point pos;
 
     //ui stuff
     GLuint VAO;
     GLuint texture;
 } Piece;
+
+bool color_equal(Color a, Color b);
+
+char* print_piece_path(PieceType piece, Color color);
 
 #endif //PIECE_H

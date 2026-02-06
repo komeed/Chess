@@ -4,6 +4,14 @@
 #include "graphics/renderer.h"
 #include "shader/shader.h"
 
+void window_size_callback(GLFWwindow* window, int width, int height)
+{
+    if (width < height + (MARGIN*2)) {
+        int new_width = height + (MARGIN*2);
+        glfwSetWindowSize(window, new_width, height);
+    }
+}
+
 int main(void) {
     // Initialize GLFW
     if (!glfwInit()) {
@@ -27,8 +35,9 @@ int main(void) {
     }
 
     int window_length = MIN(WINDOW_WIDTH, WINDOW_HEIGHT);
-    glfwSetWindowSizeLimits(window, window_length/2, window_length/2,
+    glfwSetWindowSizeLimits(window, WINDOW_WIDTH, WINDOW_HEIGHT,
                         GLFW_DONT_CARE, GLFW_DONT_CARE);
+    glfwSetWindowSizeCallback(window, window_size_callback);
     // Make the window's context current
     glfwMakeContextCurrent(window);
 
