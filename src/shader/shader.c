@@ -20,15 +20,38 @@ unsigned int init_shader_from_path(const char* vertexPath, const char* fragmentP
     glShaderSource(vertexShader, 1, &vertexSource, NULL);
     glCompileShader(vertexShader);
 
+    int success;
+    char infoLog[512];
+
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        printf("Vertex shader error:\n%s\n", infoLog);
+    }
+
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
     glCompileShader(fragmentShader);
+
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        printf("Fragment shader error:\n%s\n", infoLog);
+    }
+
 
     // 2. Create program and link shaders
     unsigned int rectShaderProgram = glCreateProgram();
     glAttachShader(rectShaderProgram, vertexShader);
     glAttachShader(rectShaderProgram, fragmentShader);
     glLinkProgram(rectShaderProgram);
+
+    glGetProgramiv(rectShaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(rectShaderProgram, 512, NULL, infoLog);
+        printf("Shader link error:\n%s\n", infoLog);
+    }
+
 
     // 3. Delete individual shaders after linking
     glDeleteShader(vertexShader);

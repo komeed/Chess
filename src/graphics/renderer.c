@@ -128,7 +128,8 @@ void render(RenderQueue* q, SizeInt windowSize) {
 
             glUniform1i(glGetUniformLocation(cmd->shaderProgram, "uTexture"), 0);
 
-            glUniform2f(glGetUniformLocation(cmd->shaderProgram, "uScale"), scaleX, scaleY);
+            glUniform2f(glGetUniformLocation(cmd->shaderProgram, "uScale"),
+                scaleX, scaleY);
 
             glBindVertexArray(cmd->VAO);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -273,8 +274,8 @@ void add_image_to_rq(RenderQueue *q, Image *image, const GLuint shaderProgram) {
         GL_TEXTURE_2D,
         0,
         format,         // how GPU stores it
-        image->rect.width,
-        image->rect.height,
+        image->orig_width,
+        image->orig_height,
         0,
         format,         // how CPU data is laid out
         GL_UNSIGNED_BYTE,
@@ -286,10 +287,11 @@ void add_image_to_rq(RenderQueue *q, Image *image, const GLuint shaderProgram) {
     float left, right, bottom, top;
     compute_ndc_for_rect(image->rect, q->windowSize, &left, &right, &bottom, &top);
     float vertices[] = {
-        left,  bottom, 0.0f, 0.0f,  // bottom-left
-        right, bottom, 1.0f, 0.0f, // bottom-right
-        right, top, 1.0f, 1.0f,    // top-righta
-        left,  top, 0.0f, 1.0f     // top-left
+        left,  bottom, 0.0f, 1.0f,
+right, bottom, 1.0f, 1.0f,
+right, top,    1.0f, 0.0f,
+left,  top,    0.0f, 0.0f
+
     };
     unsigned int indices[] = {
         0,1,2,
@@ -320,4 +322,30 @@ void add_image_to_rq(RenderQueue *q, Image *image, const GLuint shaderProgram) {
     RenderCommand command = {.shaderProgram = shaderProgram, .VAO = VAO, .indexCount = 6, .color = (Color) {255, 255, 255},
     .hasTexture = true, .texture = texture};
     push_rq(q, command);
+}
+
+void add_board_to_rq(RenderQueue *q, Board *board, const GLuint shaderProgram) {
+    float dx = q->windowSize.width/8;
+    float dy = q->windowSize.height/8;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (board->board[i][j] != Blank) {
+                char* path = print_piece_path(board->board[i][j]);
+                if (path[0] == '\0') {
+                    throw_exception(NULL_POINTER, "piece is invalid");
+                    return;
+                }
+
+                Image image = create_image(path,
+                    (Rectangle) {j*dx, i*dy, dx, dy, false});
+                add_image_to_rq(q, &image, shaderProgram);
+            }
+        }
+    }
+}
+
+SizeInt get_board_pos(RenderQueue *q, double x, double y) {
+    //y is 0 at top and max height at bottom, x is 0 left max width at right
+    SizeInt windowSize = q->windowSize;
+    printf("x: %f, y: %f", x, y);
 }

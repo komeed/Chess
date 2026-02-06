@@ -10,6 +10,7 @@
 #include "graphic_libs.h"
 #include "rectangle.h"
 #include "image.h"
+#include "../board.h"
 
 typedef struct RenderCommand {
     GLuint shaderProgram;
@@ -47,5 +48,9 @@ void add_rects_to_rq(RenderQueue *q, Rectangle rects[], size_t rect_size, Color 
 void add_tiles_to_rq(RenderQueue *q, GLuint shaderProgram);
 
 void add_image_to_rq(RenderQueue *q, Image *image, const GLuint shaderProgram);
+
+void add_board_to_rq(RenderQueue *q, Board *board, const GLuint shaderProgram);
+
+SizeInt get_board_pos(RenderQueue *q, double x, double y);
 
 #endif //RENDERER_H

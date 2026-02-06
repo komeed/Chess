@@ -54,8 +54,13 @@ int main(void) {
     init_rq(&queue, 10, (SizeInt){fbWidth, fbHeight}); // temporarily 10 commands
     add_tiles_to_rq(&queue, shaders.rectShaderProgram);
 
-    Image pawn = create_image("assets/chess-pieces/pawn.png", (Rectangle) {0, 0, 626, 626, false});
-    add_image_to_rq(&queue, &pawn, shaders.imageShaderProgram);
+    float dx = fbWidth / 8.0f;
+    float dy = fbHeight / 8.0f;
+
+    Image pawn = create_image("assets/chess-pieces/pawn.png", (Rectangle) {0, 0, dx, dy, false});
+
+    Board board = init_board();
+    add_board_to_rq(&queue, &board, shaders.imageShaderProgram);
 
     glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
 
@@ -66,6 +71,12 @@ int main(void) {
         fbWidth /= 2;
         fbHeight /= 2;
         render(&queue, (SizeInt) {fbWidth, fbHeight});
+
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            double xpos, ypos;
+            glfwGetCursorPos(window, &xpos, &ypos);
+            get_board_pos(xpos, ypos);
+        }
         // Swap front and back buffers
         glfwSwapBuffers(window);
 

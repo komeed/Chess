@@ -32,6 +32,10 @@ add_executable(Chess
         src/graphics/renderer.c
         src/graphics/image.h
         src/graphics/image.c
+        src/piece.h
+        src/piece.c
+        src/board.h
+        src/board.c
 )
 
 # Add Address Sanitizer flags for Debug and RelWithDebInfo configurations
