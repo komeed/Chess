@@ -15,7 +15,7 @@ Rectangle create_rectangle_centered_at(float centerX, float centerY, float width
 
 static void draw_opengl_shape(float vertices[], unsigned int indices[]);
 
-void draw_rectangle(Rectangle rect, SizeInt windowSize, ShaderBuffers shaderBuffers) {
+void draw_rectangle(Rectangle rect, size_int windowSize, ShaderBuffers shaderBuffers) {
     glUseProgram(shaderBuffers.rectShaderProgram);
 
     float left, right, bottom, top;
@@ -76,7 +76,7 @@ Rectangle rect_array_get(Rectangle rects[], size_t rect_size, size_t index) {
     return rects[index];
 }
 
-void compute_ndc_for_rect(Rectangle rect, SizeInt windowSize, float* left, float* right, float* bottom, float* top) {
+void compute_ndc_for_rect(Rectangle rect, size_int windowSize, float* left, float* right, float* bottom, float* top) {
     *left = rect.x;
     *right = (rect.x + rect.width);
     *bottom = rect.y;
@@ -89,7 +89,7 @@ void compute_ndc_for_rect(Rectangle rect, SizeInt windowSize, float* left, float
     }
 }
 
-Tiles create_tiles(SizeInt windowSize) {
+Tiles create_tiles(size_int windowSize) {
     float dx = windowSize.width / 8.0f;
     float dy = windowSize.height / 8.0f;
     Tiles tiles = {0};
@@ -114,4 +114,13 @@ Tiles create_tiles(SizeInt windowSize) {
         }
     }
     return tiles;
+}
+
+bool rect_contains_point(Rectangle rect, f_point point) {
+    if (point.x > rect.x && point.x < rect.x + rect.width && point.y > rect.y && point.y < rect.y + rect.height) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }

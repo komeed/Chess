@@ -23,11 +23,11 @@ typedef struct Rectangle {
 
 Rectangle create_rectangle_centered_at(float x, float y, float width, float height, bool is_ndc);
 
-void draw_rectangle(Rectangle rect, SizeInt windowSize, ShaderBuffers shaderBuffers);
+void draw_rectangle(Rectangle rect, size_int windowSize, ShaderBuffers shaderBuffers);
 
 Rectangle rect_array_get(Rectangle rects[], size_t rect_size, size_t index);
 
-void compute_ndc_for_rect(Rectangle rect, SizeInt windowSize, float* left, float* right, float* bottom, float* top);
+void compute_ndc_for_rect(Rectangle rect, size_int windowSize, float* left, float* right, float* bottom, float* top);
 
 typedef struct {
     Rectangle white_tiles[32];
@@ -36,6 +36,8 @@ typedef struct {
     Color black_color;
 } Tiles;
 
-Tiles create_tiles(SizeInt windowSize);
+Tiles create_tiles(size_int windowSize);
+
+bool rect_contains_point(Rectangle rect, f_point point);
 
 #endif //RECTANGLE_H

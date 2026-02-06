@@ -32,6 +32,9 @@ int main(void) {
     // Make the window's context current
     glfwMakeContextCurrent(window);
 
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    //glfwSetWindowAspectRatio(window, 1, 1);
+
     // 3. Load OpenGL functions with GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         fprintf(stderr, "Failed to initialize GLAD\n");
@@ -51,37 +54,25 @@ int main(void) {
     fbWidth /= 2;
     fbHeight /= 2;
     RenderQueue queue = {0};
-    init_rq(&queue, 10, (SizeInt){fbWidth, fbHeight}); // temporarily 10 commands
-    add_tiles_to_rq(&queue, shaders.rectShaderProgram);
+    init_rq(&queue, 10, (size_int){fbWidth, fbHeight}, shaders); // temporarily 10 commands
+    add_tiles_to_rq(&queue);
 
-    float dx = fbWidth / 8.0f;
-    float dy = fbHeight / 8.0f;
-
-    Image pawn = create_image("assets/chess-pieces/pawn.png", (Rectangle) {0, 0, dx, dy, false});
+    glfwSetWindowUserPointer(window, &queue);
 
     Board board = init_board();
-    add_board_to_rq(&queue, &board, shaders.imageShaderProgram);
+    add_board_to_rq(&queue, &board);
 
     glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
         // Clear the screen (optional but common
-        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-        fbWidth /= 2;
-        fbHeight /= 2;
-        render(&queue, (SizeInt) {fbWidth, fbHeight});
-
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-            double xpos, ypos;
-            glfwGetCursorPos(window, &xpos, &ypos);
-            get_board_pos(xpos, ypos);
-        }
-        // Swap front and back buffers
-        glfwSwapBuffers(window);
-
         // Poll for and process events
         glfwPollEvents();
+       // poll_left_click(window, &queue);
+        render(&queue, window);
+        // Swap front and back buffers
+        glfwSwapBuffers(window);
     }
 
     // Cleanup

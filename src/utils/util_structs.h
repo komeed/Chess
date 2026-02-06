@@ -10,7 +10,19 @@
 typedef struct SizeInt {
     int width;
     int height;
-} SizeInt;
+} size_int;
+
+typedef struct f_point {
+    float x;
+    float y;
+} f_point;
+
+typedef struct i8_point {
+    int8_t x;
+    int8_t y;
+} i8_point;
+
+void compute_ndc_for_i8_point(i8_point point, size_int windowSize, float dl, float* x, float* y);
 
 typedef struct Color {
     unsigned char r;
