@@ -6,13 +6,13 @@
 #define PIECE_TYPE_H
 
 typedef enum {
-    Blank, // blank is 0
-    Pawn,
-    Knight,
-    Bishop,
-    Queen,
-    King,
-    Rook
+    Blank = 0, // blank is 0
+    Pawn = 1,
+    Knight = 2,
+    Bishop = 3,
+    Rook = 4,
+    Queen = 5,
+    King = 6
 } PieceType;
 
 #endif //PIECE_TYPE_H

@@ -22,19 +22,19 @@ Board init_board() {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             if (i == 0) {
-                board.board[i][j] = (Piece) {.type = back_rank[j], .color = board.bottom_color, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {.type = back_rank[j], .side = 0};
             }
             else if (i == 7) {
-                board.board[i][j] = (Piece) {.type = back_rank[j], .color = board.top_color, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {.type = back_rank[j], .side = 1};
             }
             else if (i == 1) {
-                board.board[i][j] = (Piece) {Pawn, .color = board.bottom_color, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {Pawn, .side = 0};
             }
             else if (i == 6) {
-                board.board[i][j] = (Piece) {.type = Pawn, .color = board.top_color, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {.type = Pawn, .side = 1};
             }
             else {
-                board.board[i][j] = (Piece) {.type = 0, .color = 0, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {.type = 0, .side = 0};
             }
         }
     }
@@ -60,72 +60,51 @@ bool move_piece_on_board(Board* board, board_point start, board_point end) {
 }
 
 static bool check_rook_move(Board* board, board_point start, board_point end) {
-    if (start.row - end.row == 0 || start.col - end.col == 0) { // if in single line
-        //check if there aren't any pieces in the way
-        for (int i = start.col + 1; i <= end.col - 1; i++) {
-            if (board->board[start.row][i].type != Blank) {
-                return false;
-            }
-        }
-        for (int i = start.col - 1; i >= end.col + 1; i--) {
-            if (board->board[start.row][i].type != Blank) {
-                return false;
-            }
-        }
-        for (int i = start.row + 1; i <= end.row - 1; i++) {
-            if (board->board[i][start.col].type != Blank) {
-                return false;
-            }
-        }
-        for (int i = start.row - 1; i >= end.row + 1; i--) {
-            if (board->board[i][start.col].type != Blank) {
-                return false;
-            }
-        }
-        return true;
+    int dr = end.row - start.row;
+    int dc = end.col - start.col;
+
+    // must move in a straight line
+    if (dr != 0 && dc != 0)
+        return false;
+
+    int step_r = (dr > 0) - (dr < 0); // 1, 0, or -1
+    int step_c = (dc > 0) - (dc < 0); // 1, 0, or -1
+
+    int steps = (dr != 0) ? abs(dr) : abs(dc);
+
+    // check intermediate squares
+    for (int i = 1; i < steps; i++) {
+        if (board->board[start.row + i * step_r]
+                        [start.col + i * step_c].type != Blank) {
+            return false;
+                        }
     }
-    return false;
+
+    return true;
 }
 
 static bool check_bishop_move(Board* board, board_point start, board_point end) {
-    if (abs(start.row - end.row) == abs(start.col - end.col)) {
-        if (start.row - end.row == start.col - end.col) {
-            if (start.row < end.row) {
-                for (int i = 1; i < end.row - start.row; i++) {
-                    if (board->board[i+start.row][i+start.col].type != Blank) {
-                        return false;
-                    }
-                }
-            }
-            else {
-                for (int i = -1; i > end.row - start.row; i--) {
-                    if (board->board[i+start.row][i+start.col].type != Blank) {
-                        return false;
-                    }
-                }
-            }
-        }
-        else if (start.row - end.row == end.col - start.col) {
-            if (start.row < end.row) {
-                for (int i = 1; i < end.row - start.row; i++) {
-                    if (board->board[i+start.row][start.col - i].type != Blank) {
-                        return false;
-                    }
-                }
-            }
-            else {
-                for (int i = -1; i > end.row - start.row; i--) {
-                    if (board->board[start.row+i][start.col - i].type != Blank) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-    else {
+    int dr = end.row - start.row;
+    int dc = end.col - start.col;
+
+    // must be diagonal
+    if (abs(dr) != abs(dc))
         return false;
+
+    int step_r = (dr > 0) ? 1 : -1;
+    int step_c = (dc > 0) ? 1 : -1;
+
+    int steps = abs(dr);
+
+    // check intermediate squares (exclude start and end)
+    for (int i = 1; i < steps; i++) {
+        if (board->board[start.row + i * step_r]
+                        [start.col + i * step_c].type != Blank) {
+            return false;
+                        }
     }
+
+    return true;
 }
 
 bool is_board_point_in_board(board_point p) {
@@ -139,17 +118,16 @@ bool is_board_move_valid(Board* board, board_point start, board_point end) {
     }
     Piece* start_piece = &board->board[start.row][start.col];
     Piece* end_piece = &board->board[end.row][end.col];
-    if (board->is_bottom_turn == 0 && color_equal(start_piece->color, board->bottom_color)) {
+    if (board->is_bottom_turn == 0 && start_piece->side == 0) {
         return false;
     }
-    if (board->is_bottom_turn == 1 && color_equal(start_piece->color, board->top_color)) {
+    if (board->is_bottom_turn == 1 && start_piece->side == 1) {
         return false;
     }
     if (start.row == end.row && start.col == end.col) {
         return false;
     }
-    if (board->board[end.row][end.col].type != Blank &&
-        color_equal(end_piece->color, start_piece->color)) {
+    if (board->board[end.row][end.col].type != Blank && end_piece->side == start_piece->side) {
         return false; // if they are the esame color
     }
     if (start_piece->type == Knight) {
@@ -162,28 +140,32 @@ bool is_board_move_valid(Board* board, board_point start, board_point end) {
         return check_rook_move(board, start, end);
     }
     else if (start_piece->type == Pawn) {
-        if (color_equal(start_piece->color, board->top_color)) {
-            if (start.col == end.col
-                && ((start.row - end.row == 1 && end_piece->type == Blank) ||
-                (start.row - end.row == 2 && start.row == 6 &&
-                    end_piece->type == Blank && board->board[start.row - 1][start.col].type == Blank))) {
+        int dr = end.row - start.row;
+        int dc = end.col - start.col;
+
+        int dir = (start_piece->side == 1) ? -1 : 1;
+        int start_row = (dir == -1) ? 6 : 1;
+
+        // forward move
+        if (dc == 0) {
+            // 1 step
+            if (dr == dir && end_piece->type == Blank)
                 return true;
-            }
-            if (end_piece->type != Blank && ((start.col - end.col == 1 && start.row - end.row == 1) ||
-                (start.col - end.col == -1 && start.row - end.row == 1))) {
+
+            // 2 steps from starting rank
+            if (dr == 2*dir &&
+                start.row == start_row &&
+                end_piece->type == Blank &&
+                board->board[start.row + dir][start.col].type == Blank)
                 return true;
-                }
         }
-        else if (color_equal(start_piece->color, board->bottom_color)) {
-            if (start.col == end.col && ((end.row - start.row == 1 && end_piece->type == Blank)
-            || (end.row - start.row == 2 && board->board[start.row + 1][start.col].type == Blank
-            && start.row == 1 && end_piece->type == Blank))) {
-                return true;
-            }
-            if (end_piece->type != Blank && ((start.col - end.col == 1 && start.row - end.row == -1) ||
-                (start.col - end.col == -1 && start.row - end.row == -1))) {
-                return true;
-                }
+
+        // capture
+        if (abs(dc) == 1 &&
+            dr == dir &&
+            end_piece->type != Blank)
+        {
+            return true;
         }
     }
     else if (start_piece->type == Bishop) {
@@ -193,7 +175,9 @@ bool is_board_move_valid(Board* board, board_point start, board_point end) {
         return (check_rook_move(board, start, end) || check_bishop_move(board, start, end));
     }
     else if (start_piece->type == King) {
-        if (abs(start.row - end.row) == 1 || abs(start.col - end.col) == 1) {
+        int dr = abs(start.row - end.row);
+        int dc = abs(start.col - end.col);
+        if (dr <= 1 && dc <= 1 && (dr + dc) > 0) {
             return true;
         }
     }

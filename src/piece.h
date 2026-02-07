@@ -17,12 +17,7 @@ typedef struct board_point {
 
 typedef struct {
     PieceType type;
-    Color color;
-    board_point pos;
-
-    //ui stuff
-    GLuint VAO;
-    GLuint texture;
+    int8_t side; // if 0, bottom (yoru current player), if 1, top (the other player)
 } Piece;
 
 bool color_equal(Color a, Color b);

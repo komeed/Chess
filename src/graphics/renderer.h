@@ -60,7 +60,7 @@ void add_image_to_rq(RenderQueue *q, Image *image, Piece *piece);
 
 void add_board_to_rq(RenderQueue *q, Board *board);
 
-void get_board_pos(RenderQueue *q, double x, double y, int8_t* row, int8_t* col);
+bool get_board_pos(RenderQueue *q, double x, double y, board_point *bp);
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 

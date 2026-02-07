@@ -106,6 +106,31 @@ void free_rq(RenderQueue* q) {
     q->capacity = 0;
 }
 
+static void draw_chess_piece(RenderQueue *q, Piece* p, board_point bp, f_point scale) {
+    float y = (bp.row + 0.07f) / 4.0f;
+    float x = (bp.col - 0.07f) / 4.0f;
+    //printf("path: %s for x: %.2f, y: %.2f", print_piece_path(cmd->piece->type), x, y);
+
+    glUseProgram(q->image_sp);
+    glActiveTexture(GL_TEXTURE0);
+    if (p->type - 1 < 0 || p->type - 1 >= 6) {
+        throw_exception(INDEX_OUT_OF_BOUNDS, "index out of bounds!");
+        return;
+    }
+    glBindTexture(GL_TEXTURE_2D, q->board->piece_texts[p->type - 1 + p->side * 6]);
+
+    glUniform1i(glGetUniformLocation(q->image_sp, "uTexture"), 0);
+
+    glUniform2f(glGetUniformLocation(q->image_sp, "uPos"),
+        x, y);
+
+    glUniform2f(glGetUniformLocation(q->image_sp, "uScale"),
+        scale.x, scale.y);
+
+    glBindVertexArray(q->board->piece_VAO);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
 void render_board(RenderQueue *q, GLFWwindow* window, f_point scale) {
     if (!q) {
         throw_exception(NULL_POINTER, "RenderQueue is NULL");
@@ -119,54 +144,23 @@ void render_board(RenderQueue *q, GLFWwindow* window, f_point scale) {
         throw_exception(NULL_POINTER, "Window is NULL");
         return;
     }
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
+    for (int8_t i = 0; i < 8; i++) {
+        for (int8_t j = 0; j < 8; j++) {
             Piece* piece = &q->board->board[i][j];
             if (piece->type != Blank && piece != q->board->held_piece) {
-                float y = (i + 0.07f) / 4.0f;
-                float x = (j - 0.07f) / 4.0f;
-                //printf("path: %s for x: %.2f, y: %.2f", print_piece_path(cmd->piece->type), x, y);
-
-                glUseProgram(q->image_sp);
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, piece->texture);
-
-                glUniform1i(glGetUniformLocation(q->image_sp, "uTexture"), 0);
-
-                glUniform2f(glGetUniformLocation(q->image_sp, "uPos"),
-                    x, y);
-
-                glUniform2f(glGetUniformLocation(q->image_sp, "uScale"),
-                    scale.x, scale.y);
-
-                glBindVertexArray(piece->VAO);
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                draw_chess_piece(q, piece, (board_point) {i, j}, scale);
             }
         }
     }
     Piece* piece = q->board->held_piece;
     if (piece) { // draw the held one last
-        int8_t row, col;
-        double xd, yd;
-        glfwGetCursorPos(window, &xd, &yd);
-        get_board_pos(q, xd, yd, &row, &col);
-        float y = (row + 0.07f) / 4.0f;
-        float x = (col - 0.07f) / 4.0f;
-
-        glUseProgram(q->image_sp);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, piece->texture);
-
-        glUniform1i(glGetUniformLocation(q->image_sp, "uTexture"), 0);
-
-        glUniform2f(glGetUniformLocation(q->image_sp, "uPos"),
-            x, y);
-
-        glUniform2f(glGetUniformLocation(q->image_sp, "uScale"),
-            scale.x, scale.y);
-
-        glBindVertexArray(piece->VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        if (piece->type != Blank) {
+            board_point bp;
+            double xd, yd;
+            glfwGetCursorPos(window, &xd, &yd);
+            get_board_pos(q, xd, yd, &bp);
+            draw_chess_piece(q, piece, bp, scale);
+        }
     }
 }
 
@@ -402,8 +396,12 @@ left,  top,    0.0f, 0.0f
     .has_tex = true, .texture = texture, .piece = (piece ? piece : NULL)};
     push_rq(q, command);*/
     if (piece) {
-        piece->texture = texture;
-        piece->VAO = VAO;
+        if (piece->type - 1 < 0 || piece->type - 1 >= 6) {
+            throw_exception(INDEX_OUT_OF_BOUNDS, "piece type out of bounds!");
+            return;
+        }
+        q->board->piece_texts[piece->type - 1 + piece->side * 6] = texture;
+        q->board->piece_VAO = VAO;
     }
     // else, not needed yet bcs no other images
 }
@@ -424,7 +422,7 @@ void add_board_to_rq(RenderQueue *q, Board *board) {
                 return;
             }
             if (piece->type != Blank) {
-                char* path = print_piece_path(piece->type, piece->color);
+                char* path = print_piece_path(piece->type, (piece->side == 0) ? board->bottom_color : board->top_color);
                 if (path[0] == '\0') {
                     throw_exception(NULL_POINTER, "piece is invalid");
                     return;
@@ -439,11 +437,11 @@ void add_board_to_rq(RenderQueue *q, Board *board) {
     add_rect_to_rq(q, switch_rect, (Color) {0, 255, 0}, true);
 }
 
-void get_board_pos(RenderQueue *q, double x, double y, int8_t* row, int8_t* col) {
+bool get_board_pos(RenderQueue *q, double x, double y, board_point *bp) {
     //y is 0 at top and max height at bottom, x is 0 left max width at right
     if (!q) {
         throw_exception(NULL_POINTER, "RenderQueue is NULL");
-        return;
+        return false;
     }
     //first flip y (for some reason)
     size_int window_size = q->window_size;
@@ -453,12 +451,13 @@ void get_board_pos(RenderQueue *q, double x, double y, int8_t* row, int8_t* col)
     if (!rect_contains_point((Rectangle) {start_x, start_y, q->new_box_len, q->new_box_len, false}, (f_point) {x, y})) {
        // fprintf(stderr, "oops, mouse clicked outside of board! at x: %f, y: %f\n", x, y);
         q->board->held_piece = NULL;
-        return;
+        return false;
     }
     const float dl = q->new_box_len/8.0f;
-    *col = floor((x-start_x)/dl);
-    *row = floor((y-start_y)/dl);
+    bp->col = floor((x-start_x)/dl);
+    bp->row = floor((y-start_y)/dl);
     //printf("mouse clicked at row: %d, col: %d\n", *row, *col);
+    return true;
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -474,11 +473,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         }
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
-        int8_t row, col;
-        get_board_pos(queue, xpos, ypos, &row, &col);
-        Piece* piece = &queue->board->board[row][col];
-        queue->board->held_piece = piece;
-        queue->board->last_click_loc = (board_point) {row, col};
+        board_point bp;
+        if (get_board_pos(queue, xpos, ypos, &bp) == true) {
+            Piece* piece = &queue->board->board[bp.row][bp.col];
+            queue->board->held_piece = piece;
+            queue->board->last_click_loc = bp;
+        }
     }
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
         RenderQueue* queue = glfwGetWindowUserPointer(window);
@@ -494,15 +494,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         if (held_piece) {
             double xpos, ypos;
             glfwGetCursorPos(window, &xpos, &ypos);
-            int8_t row, col; // this is the new row col
-            get_board_pos(queue, xpos, ypos, &row, &col);
-            //if (row )
-            Piece* piece = &queue->board->board[row][col];
-
-            //first check if valid move
-            board_point new_loc = (board_point) {row, col};
-            board_point last_click_loc = queue->board->last_click_loc;
-            move_piece_on_board(queue->board, last_click_loc, new_loc);
+            board_point bp;
+            if (get_board_pos(queue, xpos, ypos, &bp)) {
+                board_point new_loc = bp;
+                board_point last_click_loc = queue->board->last_click_loc;
+                move_piece_on_board(queue->board, last_click_loc, new_loc);
+            }
         }
     }
 }

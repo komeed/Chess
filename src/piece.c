@@ -3,6 +3,8 @@
 //
 #include "piece.h"
 
+#include "board.h"
+
 bool color_equal(Color a, Color b) {
     return a.r == b.r && a.g == b.g && a.b == b.b;
 }
