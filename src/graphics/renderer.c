@@ -139,7 +139,7 @@ void render_board(RenderQueue *q, GLFWwindow* window, f_point scale) {
                 glUniform2f(glGetUniformLocation(q->image_sp, "uScale"),
                     scale.x, scale.y);
 
-                glBindVertexArray(piece->VAO);
+                glBindVertexArray(q->board->VAO);
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             }
         }
@@ -165,7 +165,7 @@ void render_board(RenderQueue *q, GLFWwindow* window, f_point scale) {
         glUniform2f(glGetUniformLocation(q->image_sp, "uScale"),
             scale.x, scale.y);
 
-        glBindVertexArray(piece->VAO);
+        glBindVertexArray(q->board->VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 }
@@ -403,7 +403,7 @@ left,  top,    0.0f, 0.0f
     push_rq(q, command);*/
     if (piece) {
         piece->texture = texture;
-        piece->VAO = VAO;
+        q->board->VAO = VAO;
     }
     // else, not needed yet bcs no other images
 }

@@ -22,19 +22,19 @@ Board init_board() {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             if (i == 0) {
-                board.board[i][j] = (Piece) {.type = back_rank[j], .color = board.bottom_color, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {.type = back_rank[j], .color = board.bottom_color};
             }
             else if (i == 7) {
-                board.board[i][j] = (Piece) {.type = back_rank[j], .color = board.top_color, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {.type = back_rank[j], .color = board.top_color};
             }
             else if (i == 1) {
-                board.board[i][j] = (Piece) {Pawn, .color = board.bottom_color, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {Pawn, .color = board.bottom_color};
             }
             else if (i == 6) {
-                board.board[i][j] = (Piece) {.type = Pawn, .color = board.top_color, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {.type = Pawn, .color = board.top_color};
             }
             else {
-                board.board[i][j] = (Piece) {.type = 0, .color = 0, .pos = (board_point) {i, j}};
+                board.board[i][j] = (Piece) {.type = 0, .color = 0};
             }
         }
     }
@@ -50,12 +50,22 @@ bool move_piece_on_board(Board* board, board_point start, board_point end) {
         board->held_piece = NULL;
         return false;
     }
+    if (!board->held_piece) {
+        return false;
+    }
     Piece temp_piece = *board->held_piece;
     board->board[start.row][start.col].type = Blank;
     board->last_click_loc = end;
-    board->held_piece = NULL;
     board->board[end.row][end.col] = temp_piece;
     board->is_bottom_turn = !board->is_bottom_turn;
+
+    //if pawn promotion, change to queen
+    if (temp_piece.type == Pawn && ((end.row == 0 && color_equal(temp_piece.color, board->top_color))
+        || end.row == 7 && color_equal(temp_piece.color, board->bottom_color))) {
+            temp_piece.type = Queen;
+        temp_piece.color = board->top_color;
+        }
+    board->held_piece = NULL;
     return true;
 }
 

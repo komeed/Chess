@@ -18,10 +18,8 @@ typedef struct board_point {
 typedef struct {
     PieceType type;
     Color color;
-    board_point pos;
 
     //ui stuff
-    GLuint VAO;
     GLuint texture;
 } Piece;
 

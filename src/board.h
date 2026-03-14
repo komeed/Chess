@@ -15,6 +15,8 @@ typedef struct Board {
     Color top_color;
     Color bottom_color;
     bool is_bottom_turn;
+
+    GLuint VAO;
 } Board;
 
 Board init_board();
