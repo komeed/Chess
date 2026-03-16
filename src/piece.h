@@ -8,6 +8,8 @@
 #include "piece_type.h"
 #include "utils/util_structs.h"
 #include "stdbool.h"
+
+#include "bitboards/bitboard.h"
 #include "graphics/graphic_libs.h"
 
 typedef struct board_point {
@@ -23,5 +25,10 @@ typedef struct {
 bool color_equal(Color a, Color b);
 
 char* print_piece_path(PieceType piece, Color color);
+char* print_piece_path_from_board(bitboard* b, I8 p);
+char* print_piece_path_from_board_piece(bitboard* b, U64* piece);
+
+Piece get_piece_from_board(bitboard* b, U64* piece);
+
 
 #endif //PIECE_H

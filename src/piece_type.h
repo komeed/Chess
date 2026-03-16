@@ -14,5 +14,4 @@ typedef enum {
     Queen = 5,
     King = 6
 } PieceType;
-
 #endif //PIECE_TYPE_H

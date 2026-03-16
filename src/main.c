@@ -4,6 +4,11 @@
 #include "graphics/renderer.h"
 #include "shader/shader.h"
 
+#include "bitboards/bitboard.h"
+#include "bitboards/bishop_rays.h"
+#include "bitboards/rook_rays.h"
+#include "bitboards/minimax.h"
+
 void window_size_callback(GLFWwindow* window, int width, int height)
 {
     if (width < height + (MARGIN*2)) {
@@ -68,10 +73,15 @@ int main(void) {
 
     glfwSetWindowUserPointer(window, &queue);
 
-    Board board = init_board();
+    //init bitboard stuf
+    bishop_rays b_rays = bishop_rays_init();
+    rook_rays r_rays = rook_rays_init();
+
+    gui_board board = init_board(&b_rays, &r_rays);
     add_board_to_rq(&queue, &board);
 
     glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
+
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {

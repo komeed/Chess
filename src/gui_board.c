@@ -2,50 +2,39 @@
 // Created by Omeed on 2/5/26.
 //
 
-#include "board.h"
+#include "gui_board.h"
 
 #include <stdbool.h>
 
-Board init_board() {
-    Board board;
-    board.held_piece = NULL;
-    board.last_click_loc = (board_point) {0};
+gui_board init_board(bishop_rays* b_rays, rook_rays* r_rays) {
+    gui_board board;
+    board.bitboard = init_board_bitboards(b_rays, r_rays, 1);
+    //board.held_piece = NULL;
+    board.held_bit_piece = NULL;
+    board.held_piece_pos = (board_move_pos) {-1, -1};
     board.top_color = COLOR_BLACK;
     board.bottom_color = COLOR_WHITE;
-    if (color_equal(board.bottom_color, COLOR_WHITE)) {
-        board.is_bottom_turn = true;
-    }
-    else {
-        board.is_bottom_turn = false;
-    }
-    PieceType back_rank[] = {Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook};
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if (i == 0) {
-                board.board[i][j] = (Piece) {.type = back_rank[j], .side = 0};
-            }
-            else if (i == 7) {
-                board.board[i][j] = (Piece) {.type = back_rank[j], .side = 1};
-            }
-            else if (i == 1) {
-                board.board[i][j] = (Piece) {Pawn, .side = 0};
-            }
-            else if (i == 6) {
-                board.board[i][j] = (Piece) {.type = Pawn, .side = 1};
-            }
-            else {
-                board.board[i][j] = (Piece) {.type = 0, .side = 0};
-            }
-        }
-    }
     return board;
 }
 
-bool move_piece_on_board(Board* board, board_point start, board_point end) {
+bool move_piece_on_board(gui_board* board, board_move_pos m) {
     if (!board) {
         throw_exception(NULL_POINTER, "Board is NULL");
         return false;
     }
+    board->bitboard.p = m;
+    if (!make_move(&board->bitboard)) {
+        board->held_bit_piece = NULL;
+        return false;
+    }
+    board_move_pos p = mm_find_next_pos(&board->bitboard);
+    board->bitboard.p = p;
+    make_move(&board->bitboard);
+    print_bitboard(&board->bitboard);
+    board->held_bit_piece = NULL;
+   /* U64* temp_piece = board->held_bit_piece;
+
+
     if (!is_board_move_valid(board, start, end)) {
         board->held_piece = NULL;
         return false;
@@ -55,11 +44,11 @@ bool move_piece_on_board(Board* board, board_point start, board_point end) {
     board->last_click_loc = end;
     board->held_piece = NULL;
     board->board[end.row][end.col] = temp_piece;
-    board->is_bottom_turn = !board->is_bottom_turn;
+    board->is_bottom_turn = !board->is_bottom_turn;*/
     return true;
 }
-
-static bool check_rook_move(Board* board, board_point start, board_point end) {
+/*
+static bool check_rook_move(gui_board* board, board_point start, board_point end) {
     int dr = end.row - start.row;
     int dc = end.col - start.col;
 
@@ -83,7 +72,7 @@ static bool check_rook_move(Board* board, board_point start, board_point end) {
     return true;
 }
 
-static bool check_bishop_move(Board* board, board_point start, board_point end) {
+static bool check_bishop_move(gui_board* board, board_point start, board_point end) {
     int dr = end.row - start.row;
     int dc = end.col - start.col;
 
@@ -111,7 +100,7 @@ bool is_board_point_in_board(board_point p) {
     return !(p.row < 0 || p.row >= 8 || p.col < 0 || p.col >= 8);
 }
 
-bool is_board_move_valid(Board* board, board_point start, board_point end) {
+bool is_board_move_valid(gui_board* board, board_point start, board_point end) {
     if (!is_board_point_in_board(start) || !is_board_point_in_board(end)) {
         fprintf(stderr, "error, board point is outside of boudns");
         return false;
@@ -182,4 +171,4 @@ bool is_board_move_valid(Board* board, board_point start, board_point end) {
         }
     }
     return false;
-}
+}*/

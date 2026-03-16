@@ -10,7 +10,7 @@
 #include "graphic_libs.h"
 #include "rectangle.h"
 #include "image.h"
-#include "../board.h"
+#include "../gui_board.h"
 #include "../piece.h"
 
 typedef void (*ClickCallback)(int x, int y, bool pressed);
@@ -29,7 +29,7 @@ typedef struct RenderQueue {
     size_t capacity;
     size_int window_size;
     float new_box_len;
-    Board* board;
+    gui_board* board;
 
     GLuint rect_sp;
     GLuint image_sp;
@@ -58,9 +58,9 @@ void add_tiles_to_rq(RenderQueue *q);
 
 void add_image_to_rq(RenderQueue *q, Image *image, Piece *piece);
 
-void add_board_to_rq(RenderQueue *q, Board *board);
+void add_board_to_rq(RenderQueue *q, gui_board *board);
 
-bool get_board_pos(RenderQueue *q, double x, double y, board_point *bp);
+bool get_board_pos(RenderQueue *q, double x, double y, board_move_pos *p);
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
