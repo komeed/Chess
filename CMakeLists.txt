@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.31)
 project(Chess C)
 set(CMAKE_C_STANDARD 11)
 
@@ -15,6 +15,22 @@ target_include_directories(glad PUBLIC
 )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -g -O0")
+
+set(BITBOARD_SOURCES
+        src/bitboards/bishop_rays.c
+        src/bitboards/bishop_rays.h
+        src/bitboards/bitboard.c
+        src/bitboards/bitboard.h
+        src/bitboards/minimax.c
+        src/bitboards/minimax.h
+        src/bitboards/rook_rays.c
+        src/bitboards/rook_rays.h
+        src/bitboards/dynamic_array.h
+        src/bitboards/dynamic_array.c
+        src/bitboards/macro_utils.h
+        src/bitboards/masks.h
+        src/bitboards/typedefs.h
+)
 
 add_executable(Chess
         src/main.c
@@ -33,11 +49,12 @@ add_executable(Chess
         src/graphics/image.h
         src/graphics/image.c
         src/piece_type.h
-        src/piece_type.c
-        src/board.h
-        src/board.c
+        src/gui_board.h
+        src/gui_board.c
         src/piece.h
         src/piece.c
+
+        ${BITBOARD_SOURCES}
 )
 
 # Add Address Sanitizer flags for Debug and RelWithDebInfo configurations

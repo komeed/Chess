@@ -131,26 +131,54 @@ build CMakeFiles/Chess.dir/src/graphics/image.c.o: C_COMPILER__Chess_unscanned_D
   OBJECT_DIR = CMakeFiles/Chess.dir
   OBJECT_FILE_DIR = CMakeFiles/Chess.dir/src/graphics
 
-build CMakeFiles/Chess.dir/src/piece_type.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/piece_type.c || cmake_object_order_depends_target_Chess
-  DEP_FILE = CMakeFiles/Chess.dir/src/piece_type.c.o.d
+build CMakeFiles/Chess.dir/src/gui_board.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/gui_board.c || cmake_object_order_depends_target_Chess
+  DEP_FILE = CMakeFiles/Chess.dir/src/gui_board.c.o.d
   FLAGS = -fsanitize=address -g -O0 -g -std=gnu11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra
   INCLUDES = -I/Users/omeed/CLionProjects/Chess/external/glad/include -I/Users/omeed/CLionProjects/Chess/external -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/Chess.dir
   OBJECT_FILE_DIR = CMakeFiles/Chess.dir/src
 
-build CMakeFiles/Chess.dir/src/board.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/board.c || cmake_object_order_depends_target_Chess
-  DEP_FILE = CMakeFiles/Chess.dir/src/board.c.o.d
+build CMakeFiles/Chess.dir/src/piece.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/piece.c || cmake_object_order_depends_target_Chess
+  DEP_FILE = CMakeFiles/Chess.dir/src/piece.c.o.d
   FLAGS = -fsanitize=address -g -O0 -g -std=gnu11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra
   INCLUDES = -I/Users/omeed/CLionProjects/Chess/external/glad/include -I/Users/omeed/CLionProjects/Chess/external -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/Chess.dir
   OBJECT_FILE_DIR = CMakeFiles/Chess.dir/src
 
-build CMakeFiles/Chess.dir/src/utils/util_structs.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/utils/util_structs.c || cmake_object_order_depends_target_Chess
-  DEP_FILE = CMakeFiles/Chess.dir/src/utils/util_structs.c.o.d
+build CMakeFiles/Chess.dir/src/bitboards/bishop_rays.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/bitboards/bishop_rays.c || cmake_object_order_depends_target_Chess
+  DEP_FILE = CMakeFiles/Chess.dir/src/bitboards/bishop_rays.c.o.d
   FLAGS = -fsanitize=address -g -O0 -g -std=gnu11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra
   INCLUDES = -I/Users/omeed/CLionProjects/Chess/external/glad/include -I/Users/omeed/CLionProjects/Chess/external -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/Chess.dir
-  OBJECT_FILE_DIR = CMakeFiles/Chess.dir/src/utils
+  OBJECT_FILE_DIR = CMakeFiles/Chess.dir/src/bitboards
+
+build CMakeFiles/Chess.dir/src/bitboards/bitboard.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/bitboards/bitboard.c || cmake_object_order_depends_target_Chess
+  DEP_FILE = CMakeFiles/Chess.dir/src/bitboards/bitboard.c.o.d
+  FLAGS = -fsanitize=address -g -O0 -g -std=gnu11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra
+  INCLUDES = -I/Users/omeed/CLionProjects/Chess/external/glad/include -I/Users/omeed/CLionProjects/Chess/external -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/Chess.dir
+  OBJECT_FILE_DIR = CMakeFiles/Chess.dir/src/bitboards
+
+build CMakeFiles/Chess.dir/src/bitboards/minimax.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/bitboards/minimax.c || cmake_object_order_depends_target_Chess
+  DEP_FILE = CMakeFiles/Chess.dir/src/bitboards/minimax.c.o.d
+  FLAGS = -fsanitize=address -g -O0 -g -std=gnu11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra
+  INCLUDES = -I/Users/omeed/CLionProjects/Chess/external/glad/include -I/Users/omeed/CLionProjects/Chess/external -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/Chess.dir
+  OBJECT_FILE_DIR = CMakeFiles/Chess.dir/src/bitboards
+
+build CMakeFiles/Chess.dir/src/bitboards/rook_rays.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/bitboards/rook_rays.c || cmake_object_order_depends_target_Chess
+  DEP_FILE = CMakeFiles/Chess.dir/src/bitboards/rook_rays.c.o.d
+  FLAGS = -fsanitize=address -g -O0 -g -std=gnu11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra
+  INCLUDES = -I/Users/omeed/CLionProjects/Chess/external/glad/include -I/Users/omeed/CLionProjects/Chess/external -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/Chess.dir
+  OBJECT_FILE_DIR = CMakeFiles/Chess.dir/src/bitboards
+
+build CMakeFiles/Chess.dir/src/bitboards/dynamic_array.c.o: C_COMPILER__Chess_unscanned_Debug /Users/omeed/CLionProjects/Chess/src/bitboards/dynamic_array.c || cmake_object_order_depends_target_Chess
+  DEP_FILE = CMakeFiles/Chess.dir/src/bitboards/dynamic_array.c.o.d
+  FLAGS = -fsanitize=address -g -O0 -g -std=gnu11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra
+  INCLUDES = -I/Users/omeed/CLionProjects/Chess/external/glad/include -I/Users/omeed/CLionProjects/Chess/external -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/Chess.dir
+  OBJECT_FILE_DIR = CMakeFiles/Chess.dir/src/bitboards
 
 
 # =============================================================================
@@ -160,7 +188,7 @@ build CMakeFiles/Chess.dir/src/utils/util_structs.c.o: C_COMPILER__Chess_unscann
 #############################################
 # Link the executable Chess
 
-build Chess: C_EXECUTABLE_LINKER__Chess_Debug CMakeFiles/Chess.dir/src/main.c.o CMakeFiles/Chess.dir/src/graphics/rectangle.c.o CMakeFiles/Chess.dir/src/shader/shader.c.o CMakeFiles/Chess.dir/src/utils/files.c.o CMakeFiles/Chess.dir/src/utils/errorhandler.c.o CMakeFiles/Chess.dir/src/graphics/renderer.c.o CMakeFiles/Chess.dir/src/graphics/image.c.o CMakeFiles/Chess.dir/src/piece_type.c.o CMakeFiles/Chess.dir/src/board.c.o CMakeFiles/Chess.dir/src/utils/util_structs.c.o | /opt/homebrew/lib/libglfw.3.4.dylib libglad.a || libglad.a
+build Chess: C_EXECUTABLE_LINKER__Chess_Debug CMakeFiles/Chess.dir/src/main.c.o CMakeFiles/Chess.dir/src/graphics/rectangle.c.o CMakeFiles/Chess.dir/src/shader/shader.c.o CMakeFiles/Chess.dir/src/utils/files.c.o CMakeFiles/Chess.dir/src/utils/errorhandler.c.o CMakeFiles/Chess.dir/src/graphics/renderer.c.o CMakeFiles/Chess.dir/src/graphics/image.c.o CMakeFiles/Chess.dir/src/gui_board.c.o CMakeFiles/Chess.dir/src/piece.c.o CMakeFiles/Chess.dir/src/bitboards/bishop_rays.c.o CMakeFiles/Chess.dir/src/bitboards/bitboard.c.o CMakeFiles/Chess.dir/src/bitboards/minimax.c.o CMakeFiles/Chess.dir/src/bitboards/rook_rays.c.o CMakeFiles/Chess.dir/src/bitboards/dynamic_array.c.o | /opt/homebrew/lib/libglfw.3.4.dylib libglad.a || libglad.a
   FLAGS = -fsanitize=address -g -O0 -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk
   LINK_FLAGS = -L/usr/local/opt/llvm/lib    -fsanitize=address
   LINK_LIBRARIES = -Wl,-rpath,/opt/homebrew/lib  /opt/homebrew/lib/libglfw.3.4.dylib  libglad.a  -framework OpenGL
@@ -200,6 +228,13 @@ build glad: phony libglad.a
 
 # =============================================================================
 # Folder targets.
+
+# =============================================================================
+
+#############################################
+# Folder: /Users/omeed/CLionProjects/Chess/cmake-build-debug
+
+build codegen: phony
 
 # =============================================================================
 
