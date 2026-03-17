@@ -1,0 +1,13 @@
+//
+// Created by Omeed on 2/7/26.
+//
+
+#ifndef MASKS_H
+#define MASKS_H
+
+#define NOT_A   0xFEFEFEFEFEFEFEFEULL
+#define NOT_AB  0xFCFCFCFCFCFCFCFCULL
+#define NOT_H   0x7F7F7F7F7F7F7F7FULL
+#define NOT_GH  0x3F3F3F3F3F3F3F3FULL
+
+#endif //MASKS_H
