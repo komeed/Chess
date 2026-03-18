@@ -12,15 +12,13 @@ score -= __builtin_popcountll(bbthem) * (value); \
 
 #define CLEAR_MM_BOARD_MOVES(a) ((a)->size = 0)
 
-#define NULL_BMP (-1) // 1111 1111
-
 static bm_pos_w_score find_all_possible_board_moves(bitboard* b, piece_bitboards* us, piece_bitboards* them,
     int alpha, int beta, U8 is_max, U8 depth) {
     find_all_attacking_pieces(b);
 
     U64* moving_piece = NULL;
     U64 result = 0;
-    bm_pos_w_score max_pos = {.p = (board_move_pos) {NULL_BMP, NULL_BMP}};
+    bm_pos_w_score max_pos;
     if (is_max) {
         max_pos.s = INT32_MIN;
     }
@@ -96,25 +94,25 @@ static bm_pos_w_score find_all_possible_board_moves(bitboard* b, piece_bitboards
         //if they are currently attacking us, we got checkmated
         if (us->kings & them->attacking) {
             return (bm_pos_w_score) {
-                (board_move_pos) {NULL_BMP, NULL_BMP},
+                (board_move_pos) {},
                 -CHECKMATE_SCORE};
         }
         //otherwise, it's stalemate
         else {
             return (bm_pos_w_score) {
-                (board_move_pos) {NULL_BMP, NULL_BMP},
+                (board_move_pos) {},
                 0};
         }
     }
     else if (max_pos.s == INT32_MAX) {
             if (us->kings & them->attacking) {
                 return (bm_pos_w_score) {
-                    (board_move_pos) {NULL_BMP, NULL_BMP},
+                    (board_move_pos) {},
                     CHECKMATE_SCORE};
             }
             else {
                 return (bm_pos_w_score) {
-                    (board_move_pos) {NULL_BMP, NULL_BMP},
+                    (board_move_pos) {},
                     0};
             }
         }
@@ -142,76 +140,93 @@ static board_move_trace find_board_move_trace(bitboard* b, piece_bitboards* us, 
         max_pos = (bm_pos_w_score) {.s = INT32_MAX};
     }
 
+    scores_for_legal_moves* l_moves = &b->legal_moves_array[depth - 1];
+    clear_legal_board_move_with_score(l_moves);
     for (I8 i = 0; i < 64; i++) {
         moving_piece = find_valid_moves_for_piece(b, us, i, &result);
-        result &= ~us->all;
         if (moving_piece != NULL) {
+            result &= ~us->all;
             while (result) {
                 I8 end_sq = (I8) __builtin_ctzll(result);
                 const board_move_pos move_pos = {i, end_sq};
-                test_move_w_flags(b, us, them, move_pos, moving_piece);
-                reset_board_all(b);
-                //find_all_attacking_pieces(b);
-
-                if (!(is_attacking_our_king(b, us, them))) { // if they are not still attacking our king (legal move)
-                    b->count++;
-                    board_move_trace their_trace = mm_recurse_helper_trace(b, them, us, alpha, beta, !is_max, depth - 1);
-                    bm_pos_w_score ps = get_top_move(&their_trace);
-                    if (is_max) {
-                        if (their_trace.score > max_pos.s) {
-                            alpha = ps.s;
-                            max_pos.s = ps.s;
-                            max_pos.p = move_pos;
-                            if (beta <= alpha) {
-                                //prune the rest
-                                unmove_piece(b);
-                                reset_board_all(b);
-                                break;
-                            }
-                            trace = their_trace;
-                        }
-                    }
-                    else {
-                        if (their_trace.score < max_pos.s) {
-                            beta = ps.s;
-                            max_pos.s = ps.s;
-                            max_pos.p = move_pos;
-                            if (beta <= alpha) {
-                                //prune the rest
-                                unmove_piece(b);
-                                reset_board_all(b);
-                                break;
-                            }
-                            trace = their_trace;
-                        }
-                    }
-                }
-                unmove_piece(b);
-                reset_board_all(b);
+                I32 score = lightweight_eval(us, them, move_pos, moving_piece);
+                add_legal_board_move_with_score(l_moves, move_pos, score, moving_piece);
                 result &= result - 1;
             }
         }
+    }
+
+    for (int i = 0; i < l_moves->size; i++) {
+        int best = i;
+        for (int j = i + 1; j < l_moves->size; j++) {
+            if (l_moves->ps[j].s > l_moves->ps[best].s) {
+                best = j;
+            }
+        }
+        //swap them
+        bmps_with_mp temp = l_moves->ps[best];
+        l_moves->ps[best] = l_moves->ps[i];
+        l_moves->ps[i] = temp;
+        //then run the typical processing on best
+        bmps_with_mp* pos = &l_moves->ps[i];
+        test_move_w_flags(b, us, them, pos->p, pos->moving_piece);
+        reset_board_all(b);
+        if (!(is_attacking_our_king(b, us, them))) { // if they are not still attacking our king (legal move)
+            b->count++;
+            board_move_trace their_trace = mm_recurse_helper_trace(b, them, us, alpha, beta, !is_max, depth - 1);
+            bm_pos_w_score ps = get_top_move(&their_trace);
+            if (is_max) {
+                if (their_trace.score > max_pos.s) {
+                    alpha = ps.s;
+                    max_pos.s = ps.s;
+                    max_pos.p = pos->p;
+                    if (beta <= alpha) {
+                        //prune the rest
+                        unmove_piece(b);
+                        reset_board_all(b);
+                        break;
+                    }
+                    trace = their_trace;
+                }
+            }
+            else {
+                if (their_trace.score < max_pos.s) {
+                    beta = ps.s;
+                    max_pos.s = ps.s;
+                    max_pos.p = pos->p;
+                    if (beta <= alpha) {
+                        //prune the rest
+                        unmove_piece(b);
+                        reset_board_all(b);
+                        break;
+                    }
+                    trace = their_trace;
+                }
+            }
+        }
+        unmove_piece(b);
+        reset_board_all(b);
     }
     // also means we are max
     if (max_pos.s == INT32_MIN) {
         //if they are currently attacking us, we got checkmated
         if (us->kings & them->attacking) {
-            add_legal_board_move(&trace, (board_move_pos) {NULL_BMP, NULL_BMP},
-                -CHECKMATE_SCORE);
+            add_legal_board_move(&trace, (board_move_pos) {},
+                -CHECKMATE_SCORE + (MAX_PLY - depth));
         }
         //otherwise, it's stalemate
         else {
-            add_legal_board_move(&trace, (board_move_pos) {NULL_BMP, NULL_BMP},
+            add_legal_board_move(&trace, (board_move_pos) {},
                 0);
         }
     }
     else if (max_pos.s == INT32_MAX) {
         if (us->kings & them->attacking) {
-            add_legal_board_move(&trace, (board_move_pos) {NULL_BMP, NULL_BMP},
-                CHECKMATE_SCORE);
+            add_legal_board_move(&trace, (board_move_pos) {},
+                CHECKMATE_SCORE - (MAX_PLY - depth));
         }
         else {
-            add_legal_board_move(&trace, (board_move_pos) {NULL_BMP, NULL_BMP},
+            add_legal_board_move(&trace, (board_move_pos) {},
                 0);
         }
     }
@@ -277,7 +292,7 @@ bm_pos_w_score mm_recurse_helper(bitboard* b, piece_bitboards* us, piece_bitboar
             score = compute_HCE(them, us);
         }
         return (bm_pos_w_score) {
-            (board_move_pos) {NULL_BMP, NULL_BMP},
+            (board_move_pos) {},
             score};
     }
     return find_all_possible_board_moves(b, us, them, alpha, beta, is_max, depth);
@@ -294,7 +309,7 @@ board_move_trace mm_recurse_helper_trace(bitboard* b, piece_bitboards* us, piece
             score = compute_HCE(them, us);
         }
         board_move_trace trace = {.size = 0};
-        add_legal_board_move(&trace, (board_move_pos) {NULL_BMP, NULL_BMP}, score);
+        add_legal_board_move(&trace, (board_move_pos) {}, score);
         return trace;
     }
     return find_board_move_trace(b, us, them, alpha, beta, is_max, depth);

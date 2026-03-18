@@ -90,24 +90,26 @@ bitboard init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_min
             .kings   = 0x1000000000000000ULL
         }
     };
-   /* bitboard board = {
-        .white = {
-            .pawns   = 0x0000008040020000ULL, // b3=17, g4=30, h5=39
-            .rooks   = 0x0000000000000000ULL,
-            .knights = 0x0000000000000000ULL,
-            .bishops = 0x0000000000000000ULL,
-            .queens  = 0x0000000000000000ULL,
-            .kings   = 0x0000000080000000ULL  // h4=31
-        },
-        .black = {
-            .pawns   = 0x0000800002010000ULL,
-            .rooks   = 0x8100000000000000ULL,
-            .knights = 0x6000000000000000ULL,
-            .bishops = 0x0000000000000000ULL,
-            .queens  = 0x0000000000004000ULL,
-            .kings   = 0x0010000000000000ULL
-        }
-    };
+    board.flags = 0;
+    board.count = 0;
+    /* bitboard board = {
+     .white = {
+         .pawns   = 0x0000000020008000ULL,
+         .rooks   = 0x0000000000000020ULL,
+         .knights = 0ULL,
+         .bishops = 0ULL,
+         .queens  = 0ULL,
+         .kings   = 0x0000000000000010ULL
+     },
+     .black = {
+         .pawns   = 0x0080001440000000ULL,
+         .rooks   = 0x8000000000000200ULL,
+         .knights = 0x0200000000000000ULL,
+         .bishops = 0x2000000800000000ULL,
+         .queens  = 0x0000000000080000ULL,
+         .kings   = 0x1000000000000000ULL
+     }
+ };
     board.count = 0;
     board.flags = 0; // default turns (white turn first, every other flag is off)
     board.flags |= (R_WK_FLAG | R_WQ_FLAG | R_BK_FLAG | R_BQ_FLAG);*/

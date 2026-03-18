@@ -27,6 +27,8 @@ bool move_piece_on_board(gui_board* board, board_move_pos m) {
         board->held_bit_piece = NULL;
         return false;
     }
+   // board_move_trace trace = mm_find_next_move_trace(&board->bitboard);
+   // print_board_move_trace(&trace);
     board_move_pos p = mm_find_next_pos(&board->bitboard);
     board->bitboard.p = p;
     make_move(&board->bitboard);
