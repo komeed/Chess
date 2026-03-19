@@ -8,7 +8,7 @@
 
 gui_board init_board(bishop_rays* b_rays, rook_rays* r_rays) {
     gui_board board;
-    board.bitboard = init_board_bitboards(b_rays, r_rays, 1);
+    board.bitboard_ptr = init_board_bitboards(b_rays, r_rays, 1);
     //board.held_piece = NULL;
     board.held_bit_piece = NULL;
     board.held_piece_pos = (board_move_pos) {-1, -1, 0};
@@ -22,23 +22,24 @@ bool move_piece_on_board(gui_board* board, board_move_pos m) {
         throw_exception(NULL_POINTER, "Board is NULL");
         return false;
     }
-    board->bitboard.p = m;
-    if (board->bitboard.waiting_for_pawn_promote || !make_move(&board->bitboard)) {
+    board->bitboard_ptr->p = m;
+    if (board->bitboard_ptr->waiting_for_pawn_promote || !make_move(board->bitboard_ptr)) {
         board->held_bit_piece = NULL;
         return false;
     }
-    if (board->bitboard.waiting_for_pawn_promote) {
-        board->bitboard.flags ^= TURN_FLAG;
+    if (board->bitboard_ptr->waiting_for_pawn_promote) {
+        board->bitboard_ptr->flags ^= TURN_FLAG;
         return true;
     }
    // board_move_trace trace = mm_find_next_move_trace(&board->bitboard);
    // print_board_move_trace(&trace);
-    if (board->bitboard.use_minimax_on_black) {
-        board_move_pos p = mm_find_next_pos(&board->bitboard);
-        board->bitboard.p = p;
-        make_move(&board->bitboard);
+    if (board->bitboard_ptr->use_minimax_on_black) {
+        bm_pos_w_score ps = mm_find_next_pos(board->bitboard_ptr);
+        print_bm_w_score(ps);
+        board->bitboard_ptr->p = ps.p;
+        make_move(board->bitboard_ptr);
     }
-    print_bitboard(&board->bitboard);
+    print_bitboard(board->bitboard_ptr);
     board->held_bit_piece = NULL;
    /* U64* temp_piece = board->held_bit_piece;
 

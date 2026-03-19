@@ -30,6 +30,7 @@ set(BITBOARD_SOURCES
         src/bitboards/macro_utils.h
         src/bitboards/masks.h
         src/bitboards/typedefs.h
+        src/bitboards/pst_boards.h
 )
 
 add_executable(Chess

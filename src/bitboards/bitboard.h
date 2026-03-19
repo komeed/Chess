@@ -131,7 +131,7 @@ U8 is_attacking_our_king(bitboard* b, piece_bitboards* us, piece_bitboards* them
 
 int8_t set_board_new_pos(bitboard* b, const char input[5]);
 
-bitboard init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_minimax);
+bitboard* init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_minimax);
 
 void add_to_move_stack(bitboard* b, U64* moved_piece, U64* destroyed_piece, U8 ep_square, board_move_pos move_pos, U8 flags);
 

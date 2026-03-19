@@ -78,8 +78,15 @@ static void init_king_attacks(bitboard* b) {
     }
 }
 
-bitboard init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_minimax) {
-    /*bitboard board = {
+bitboard* init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_minimax) {
+    bitboard *board = malloc(sizeof(bitboard));
+
+    if (!board) {
+        fprintf(stderr, "Failed to allocate memory for bitboards\n");
+        exit(1);
+    }
+
+    *board = (bitboard) {
         .white = {
             .pawns   = 0x000000000000FF00ULL,
             .rooks   = 0x0000000000000081ULL,
@@ -97,15 +104,15 @@ bitboard init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_min
             .kings   = 0x1000000000000000ULL
         }
     };
-    board.flags = 0;
-    board.count = 0;*/
-    bitboard board = {
+    board->flags = 0;
+    board->count = 0;
+    /**board = (bitboard) {
         .white = {
             .pawns   = 0x000000000000FB00ULL,
-            .rooks   = 0x0000000000000081ULL,
-            .knights = 0x0000000000000042ULL,
+            .rooks   = 0x0000000000000080ULL,
+            .knights = 0,
             .bishops = 0x0000000000000020ULL,
-            .queens  = 0x0000000000000008ULL,
+            .queens  = 0,
             .kings   = 0x0000000000000010ULL
         },
         .black = {
@@ -117,28 +124,28 @@ bitboard init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_min
             .kings   = 0x1000000000000000ULL
         }
     };
-    board.count = 0;
-    board.flags = 0; // default turns (white turn first, every other flag is off)
+    board->count = 0;
+    board->flags = 0; // default turns (white turn first, every other flag is off)*/
     //board.flags |= (R_WK_FLAG | R_WQ_FLAG | R_BK_FLAG | R_BQ_FLAG);
     //board.flags |= TURN_FLAG;
-    board.flags &= ~TURN_FLAG;
-    board.b_rays = b_rays;
-    board.r_rays = r_rays;
-    board.ply_size = 0;
-    board.use_ab_pruning = use_minimax;
-    init_knight_attacks(&board);
-    init_king_attacks(&board);
+    board->flags &= ~TURN_FLAG;
+    board->b_rays = b_rays;
+    board->r_rays = r_rays;
+    board->ply_size = 0;
+    board->use_ab_pruning = use_minimax;
+    init_knight_attacks(board);
+    init_king_attacks(board);
 
-    board.waiting_for_pawn_promote = 0;
-    board.use_minimax_on_black = 1;
+    board->waiting_for_pawn_promote = 0;
+    board->use_minimax_on_black = 1;
 
-    init_piece_bitboard_promo_table(&board.white);
-    init_piece_bitboard_promo_table(&board.black);
+    init_piece_bitboard_promo_table(&board->white);
+    init_piece_bitboard_promo_table(&board->black);
 
-    clear_scores_for_legal_moves_arr(board.legal_moves_array);
+    clear_scores_for_legal_moves_arr(board->legal_moves_array);
 
-    reset_board_all(&board);
-    find_all_attacking_pieces(&board);
+    reset_board_all(board);
+    find_all_attacking_pieces(board);
     return board;
 }
 

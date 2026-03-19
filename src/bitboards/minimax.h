@@ -7,13 +7,14 @@
 
 #include "bitboard.h"
 #include "dynamic_array.h"
+#include "pst_boards.h"
 
 #define CHECKMATE_SCORE 10000000
-#define PAWN_SCORE 10
-#define KNIGHT_SCORE 32
-#define BISHOP_SCORE 33
-#define ROOK_SCORE 50
-#define QUEEN_SCORE 90
+#define PAWN_SCORE 100
+#define KNIGHT_SCORE 320
+#define BISHOP_SCORE 330
+#define ROOK_SCORE 500
+#define QUEEN_SCORE 900
 #define KING_SCORE 0 // edge case
 
 #define GET_PIECE_SCORE(square, side) ( \
@@ -40,9 +41,10 @@ ROOK_SCORE )
 
 void add_mm_best_board_moves(board_move_pos p);
 
-board_move_pos mm_find_next_pos(bitboard* b);
+bm_pos_w_score mm_find_next_pos(bitboard* b);
 
-I32 compute_HCE(const piece_bitboards* us, const piece_bitboards* them);
+//I32 compute_HCE(const piece_bitboards* us, const piece_bitboards* them);
+I32 compute_board_score(const bitboard* b, const piece_bitboards* us, const piece_bitboards* them);
 
 void print_board_move_pos(board_move_pos p);
 
@@ -55,5 +57,6 @@ board_move_trace mm_recurse_helper_trace(bitboard* b, piece_bitboards* us, piece
 board_move_trace mm_find_next_move_trace(bitboard* b);
 I32 lightweight_eval(const piece_bitboards* us, const piece_bitboards* them, board_move_pos p, const U64* moving_piece);
 void print_board_move_trace(board_move_trace* ps);
+void print_bm_w_score(bm_pos_w_score ps);
 
 #endif //MINIMAX_H

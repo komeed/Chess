@@ -145,10 +145,10 @@ void render_board(RenderQueue *q, GLFWwindow* window, f_point scale) {
         return;
     }
     for (int i = 0; i < 64; i++) {
-        U64* piece = find_piece_on_board(&q->board->bitboard, i);
+        U64* piece = find_piece_on_board(q->board->bitboard_ptr, i);
         if (piece != NULL) {
             if (!(piece == q->board->held_bit_piece && i == q->board->held_piece_pos.start_square)) {
-                Piece p = get_piece_from_board(&q->board->bitboard, piece);
+                Piece p = get_piece_from_board(q->board->bitboard_ptr, piece);
                 draw_chess_piece(q, &p, (board_point) {i / 8, i % 8}, scale);
             }
         }
@@ -160,7 +160,7 @@ void render_board(RenderQueue *q, GLFWwindow* window, f_point scale) {
         double xd, yd;
         glfwGetCursorPos(window, &xd, &yd);
         get_board_pos(q, xd, yd, &bp);
-        Piece p = get_piece_from_board(&q->board->bitboard, piece);
+        Piece p = get_piece_from_board(q->board->bitboard_ptr, piece);
         draw_chess_piece(q, &p, (board_point) {bp.start_square / 8, bp.start_square % 8}, scale);
     }
 }
@@ -206,7 +206,7 @@ void render(RenderQueue* q, GLFWwindow* window) {
         glUniform2f(vertexScaleLocation, scaleX, scaleY);
         if (cmd->is_switch == true) {
             GLfloat offset = 0;
-            if (q->board->bitboard.flags & TURN_FLAG) {
+            if (q->board->bitboard_ptr->flags & TURN_FLAG) {
                 offset = 1.0f;
             }
             glUniform2f(vertexPosLocation, 0.0f, offset);
@@ -416,10 +416,10 @@ void add_board_to_rq(RenderQueue *q, gui_board *board) {
     float dx = q->window_size.width/8;
     float dy = q->window_size.height/8;
     for (int i = 0; i < 64; i++) {
-        U64* piece = find_piece_on_board(&board->bitboard, i);
+        U64* piece = find_piece_on_board(board->bitboard_ptr, i);
         if (piece != NULL) {
-            char* path = print_piece_path_from_board_piece(&board->bitboard, piece);
-            Piece p = get_piece_from_board(&board->bitboard, piece);
+            char* path = print_piece_path_from_board_piece(board->bitboard_ptr, piece);
+            Piece p = get_piece_from_board(board->bitboard_ptr, piece);
             Image image = create_image(path,
                 (Rectangle) {0, 0, dx, dy, false});
             add_image_to_rq(q, &image, &p);
@@ -459,36 +459,32 @@ bool get_board_pos(RenderQueue *q, double x, double y, board_move_pos *p) {
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    RenderQueue* queue = glfwGetWindowUserPointer(window);
+    if (queue == NULL) {
+        throw_exception(NULL_POINTER, "RenderQueue is NULL");
+        return;
+    }
+    if (!queue->board) {
+        throw_exception(NULL_POINTER, "board is NULL!");
+        return;
+    }
+    bitboard* b = queue->board->bitboard_ptr;
+    if (!b) {
+        throw_exception(NULL_POINTER, "bitboard is NULL!");
+        return;
+    }
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        RenderQueue* queue = glfwGetWindowUserPointer(window);
-        if (!queue ) {
-            throw_exception(NULL_POINTER, "queue is NULL!");
-            return;
-        }
-        if (!queue->board) {
-            throw_exception(NULL_POINTER, "board is NULL!");
-            return;
-        }
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
         board_move_pos p;
         if (get_board_pos(queue, xpos, ypos, &p) == true) {
             printf("sq: %d", p.start_square);
-            U64* piece_bit = find_piece_on_board(&queue->board->bitboard, p.start_square);
+            U64* piece_bit = find_piece_on_board(b, p.start_square);
             queue->board->held_piece_pos = p;
             queue->board->held_bit_piece = piece_bit;
         }
     }
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
-        RenderQueue* queue = glfwGetWindowUserPointer(window);
-        if (!queue ) {
-            throw_exception(NULL_POINTER, "queue is NULL!");
-            return;
-        }
-        if (!queue->board) {
-            throw_exception(NULL_POINTER, "board is NULL!");
-            return;
-        }
         U64* held_piece = queue->board->held_bit_piece;
         if (held_piece) {
             double xpos, ypos;
@@ -514,7 +510,7 @@ void key_callback(GLFWwindow* window,
                   int mods)
 {
     RenderQueue* queue = glfwGetWindowUserPointer(window);
-    bitboard* b = &queue->board->bitboard;
+    bitboard* b = queue->board->bitboard_ptr;
     if (b == NULL) {
         throw_exception(NULL_POINTER, "board is NULL!");
         return;

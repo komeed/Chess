@@ -12,7 +12,7 @@
 typedef struct gui_board {
     U64* held_bit_piece;
     board_move_pos held_piece_pos;
-    bitboard bitboard;
+    bitboard* bitboard_ptr;
     bishop_rays bishop_rays;
     rook_rays rook_rays;
    // board_point last_click_loc;
@@ -22,6 +22,8 @@ typedef struct gui_board {
 
     GLuint piece_VAO;
     GLuint piece_texts[12]; // first 6 are bottom, second 6 are top
+
+    U8 use_minimax_for_black;
 } gui_board;
 
 gui_board init_board(bishop_rays* b_rays, rook_rays* r_rays);
