@@ -506,3 +506,49 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         }
     }
 }
+
+void key_callback(GLFWwindow* window,
+                  int key,
+                  int scancode,
+                  int action,
+                  int mods)
+{
+    RenderQueue* queue = glfwGetWindowUserPointer(window);
+    bitboard* b = &queue->board->bitboard;
+    if (b == NULL) {
+        throw_exception(NULL_POINTER, "board is NULL!");
+        return;
+    }
+    if (b->waiting_for_pawn_promote) {
+        if (action == GLFW_PRESS) {
+            piece_bitboards* us = &b->white;
+            if (b->flags & TURN_FLAG) {
+                us = &b->black;
+            }
+            if (key == GLFW_KEY_Q) {
+                promote_pawn(&us->pawns, &us->queens, b->p);
+                b->waiting_for_pawn_promote = 0;
+                b->flags ^= TURN_FLAG;
+            }
+            else if (key == GLFW_KEY_R) {
+                promote_pawn(&us->pawns, &us->rooks, b->p);
+                b->waiting_for_pawn_promote = 0;
+                b->flags ^= TURN_FLAG;
+            }
+            else if (key == GLFW_KEY_B) {
+                promote_pawn(&us->pawns, &us->bishops, b->p);
+                b->waiting_for_pawn_promote = 0;
+                b->flags ^= TURN_FLAG;
+            }
+            else if (key == GLFW_KEY_N) {
+                promote_pawn(&us->pawns, &us->knights, b->p);
+                b->waiting_for_pawn_promote = 0;
+                b->flags ^= TURN_FLAG;
+            }
+        }
+    }
+    if (action == GLFW_PRESS && key == GLFW_KEY_SPACE) {
+        printf("space pressed");
+        b->use_minimax_on_black ^= 1;
+    }
+}

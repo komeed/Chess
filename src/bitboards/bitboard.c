@@ -18,6 +18,13 @@
 
 //masks
 
+void init_piece_bitboard_promo_table(piece_bitboards* side) {
+    side->promo_table[M_PP_Q - 1] = &side->queens;
+    side->promo_table[M_PP_N - 1] = &side->knights;
+    side->promo_table[M_PP_B - 1] = &side->bishops;
+    side->promo_table[M_PP_R - 1] = &side->rooks;
+}
+
 void reset_board_all(bitboard* b) {
     piece_bitboards* white = &b->white;
     piece_bitboards* black = &b->black;
@@ -72,7 +79,7 @@ static void init_king_attacks(bitboard* b) {
 }
 
 bitboard init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_minimax) {
-    bitboard board = {
+    /*bitboard board = {
         .white = {
             .pawns   = 0x000000000000FF00ULL,
             .rooks   = 0x0000000000000081ULL,
@@ -91,28 +98,28 @@ bitboard init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_min
         }
     };
     board.flags = 0;
-    board.count = 0;
-    /* bitboard board = {
-     .white = {
-         .pawns   = 0x0000000020008000ULL,
-         .rooks   = 0x0000000000000020ULL,
-         .knights = 0ULL,
-         .bishops = 0ULL,
-         .queens  = 0ULL,
-         .kings   = 0x0000000000000010ULL
-     },
-     .black = {
-         .pawns   = 0x0080001440000000ULL,
-         .rooks   = 0x8000000000000200ULL,
-         .knights = 0x0200000000000000ULL,
-         .bishops = 0x2000000800000000ULL,
-         .queens  = 0x0000000000080000ULL,
-         .kings   = 0x1000000000000000ULL
-     }
- };
+    board.count = 0;*/
+    bitboard board = {
+        .white = {
+            .pawns   = 0x000000000000FB00ULL,
+            .rooks   = 0x0000000000000081ULL,
+            .knights = 0x0000000000000042ULL,
+            .bishops = 0x0000000000000020ULL,
+            .queens  = 0x0000000000000008ULL,
+            .kings   = 0x0000000000000010ULL
+        },
+        .black = {
+            .pawns   = 0x00FF000000000400ULL,
+            .rooks   = 0x8100000000000000ULL,
+            .knights = 0x4200000000000000ULL,
+            .bishops = 0x2400000000000000ULL,
+            .queens  = 0x0800000000000000ULL,
+            .kings   = 0x1000000000000000ULL
+        }
+    };
     board.count = 0;
     board.flags = 0; // default turns (white turn first, every other flag is off)
-    board.flags |= (R_WK_FLAG | R_WQ_FLAG | R_BK_FLAG | R_BQ_FLAG);*/
+    //board.flags |= (R_WK_FLAG | R_WQ_FLAG | R_BK_FLAG | R_BQ_FLAG);
     //board.flags |= TURN_FLAG;
     board.flags &= ~TURN_FLAG;
     board.b_rays = b_rays;
@@ -121,6 +128,12 @@ bitboard init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_min
     board.use_ab_pruning = use_minimax;
     init_knight_attacks(&board);
     init_king_attacks(&board);
+
+    board.waiting_for_pawn_promote = 0;
+    board.use_minimax_on_black = 1;
+
+    init_piece_bitboard_promo_table(&board.white);
+    init_piece_bitboard_promo_table(&board.black);
 
     clear_scores_for_legal_moves_arr(board.legal_moves_array);
 
@@ -394,7 +407,11 @@ static void validate_rook_moves(bitboard* b, U8 s, U64* result) {
 static void validate_king_moves(bitboard* b, piece_bitboards* us, U8 s, U64* result) { // return 1 if castle, return 0 if don't castle
     U64 start = 1ULL << s;
     *result |= b->king_attacks[s];
-    if (!(b->attacking & start)) {
+    piece_bitboards* them = &b->white;
+    if (us == them) {
+        them = &b->black;
+    }
+    if (!(them->attacking & start)) {
         if (us == &b->black) { // if turn is black
             if (!(b->flags & R_BK_FLAG)) { // if rook near bk isn't flagged (top right)
                 // make sure that king hasn't moved and is still in the correct spot
@@ -579,24 +596,55 @@ static U8 does_them_have_legal_moves(bitboard* b, piece_bitboards* us, piece_bit
         if (moving_piece != NULL) {
             while (result) {
                 I8 end_sq = (I8) __builtin_ctzll(result);
-                test_move_w_flags(b, them, us, (board_move_pos) {i, end_sq}, moving_piece);
-                reset_board_all(b);
-                find_all_attacking_pieces(b);
-                if (!(them->kings & us->attacking)) { // if WE are not still attacking their king (they protected successfully)
-                    unmove_piece(b);
-                    reset_board_all(b);
-                    if (!boards_are_equal(&temp_b, b)) {
-                        fprintf(stderr, "inside we are not still attacking king: boards are not equal!");
-                        exit(1);
+                board_move_pos move_pos = {i, end_sq, 0};
+                if (moving_piece == &them->pawns && ((end_sq < 8 && them == &b->black) || (end_sq > 55 && them == &b->white))) {
+                    for (int j = 1; j < 5; j++) {
+                        move_pos.pp_flag = j;
+                        if (j == 1) {
+                            j = 1;
+                        }
+                        test_move_w_flags(b, them, us, (board_move_pos) {i, end_sq, j}, moving_piece);
+                        reset_board_all(b);
+                        find_all_attacking_pieces(b);
+                        if (!(them->kings & us->attacking)) { // if WE are not still attacking their king (they protected successfully)
+                            unmove_piece(b, them); //
+                            reset_board_all(b);
+                            if (!boards_are_equal(&temp_b, b)) {
+                                fprintf(stderr, "inside we are not still attacking king: boards are not equal!");
+                                exit(1);
+                            }
+                            return 1;
+                        }
+                        else { // otherwise, unmove. (move invalid)
+                            unmove_piece(b, them);
+                            reset_board_all(b);
+                            if (!boards_are_equal(&temp_b, b)) {
+                                fprintf(stderr, "inside otherwise unmove: boards are not equal!");
+                                exit(1);
+                            }
+                        }
                     }
-                   return 1;
                 }
-                else { // otherwise, unmove. (move invalid)
-                    unmove_piece(b);
+                else {
+                    test_move_w_flags(b, them, us, (board_move_pos) {i, end_sq, 0}, moving_piece);
                     reset_board_all(b);
-                    if (!boards_are_equal(&temp_b, b)) {
-                        fprintf(stderr, "inside otherwise unmove: boards are not equal!");
-                        exit(1);
+                    find_all_attacking_pieces(b);
+                    if (!(them->kings & us->attacking)) { // if WE are not still attacking their king (they protected successfully)
+                        unmove_piece(b, them); //
+                        reset_board_all(b);
+                        if (!boards_are_equal(&temp_b, b)) {
+                            fprintf(stderr, "inside we are not still attacking king: boards are not equal!");
+                            exit(1);
+                        }
+                        return 1;
+                    }
+                    else { // otherwise, unmove. (move invalid)
+                        unmove_piece(b, them);
+                        reset_board_all(b);
+                        if (!boards_are_equal(&temp_b, b)) {
+                            fprintf(stderr, "inside otherwise unmove: boards are not equal!");
+                            exit(1);
+                        }
                     }
                 }
                 result &= result - 1;
@@ -702,7 +750,7 @@ static void move_piece_direct(U64* piece, U8 s, U8 e) {
     //print_u64(*piece);
 }
 
-static void move_piece(move* m) {
+static void move_piece(move* m, piece_bitboards* us) {
     U8 start_square = m->p.start_square;
     U8 end_square = m->p.end_square;
     if (m->old_flags & M_CASTLE_FLAG) { // if its castle
@@ -733,31 +781,34 @@ static void move_piece(move* m) {
         }
     }
     else {
+        U64* piece = GET_PP_PIECE(us, m->p.pp_flag);
+        if (piece != NULL) {
+            if (m->destroyed_piece != NULL) {
+                remove_opponent_piece(m->destroyed_piece, end_square);
+            }
+            remove_opponent_piece(m->moved_piece, start_square); // first remove the pawn
+            *piece |= 1ULL << end_square;
+            return;
+        }
         if (m->destroyed_piece != NULL) {
             remove_opponent_piece(m->destroyed_piece, end_square);
-        }
-        else {
-           // printf("eating empyt square!\n");
         }
     }
     move_piece_direct(m->moved_piece, start_square, end_square);
 }
 
-void add_to_move_stack(bitboard* b, U64* moved_piece, U64* destroyed_piece, U8 ep_square, U8 start_square,
-    U8 end_square, U8 flags, U8 pawn_promote_flags) {
+void add_to_move_stack(bitboard* b, U64* moved_piece, U64* destroyed_piece, U8 ep_square, board_move_pos move_pos, U8 flags) {
     //if our size exceeds max_ply
     if (b->ply_size == MAX_PLY + 1) {
         fprintf(stderr, "b->ply_size exceeded! this shoudln't hpapen!!");
         exit(1);
     }
     b->move_stack[b->ply_size] = (move){
-        moved_piece,
-        destroyed_piece,
-        ep_square,
-        start_square,
-        end_square,
-        flags,
-        pawn_promote_flags
+        .moved_piece = moved_piece,
+        .destroyed_piece = destroyed_piece,
+        .ep_square = ep_square,
+        move_pos,
+        flags
     };
     b->ply_size++;
 }
@@ -832,7 +883,7 @@ U64* test_move_w_flags(bitboard* b, piece_bitboards* us, piece_bitboards* them, 
                     exit(1);
                 }
                 add_to_move_stack(b, moving_piece, destroy_piece, b->double_move_square,
-                    p.start_square, p.end_square, b->flags | M_EN_PASSANT_FLAG, 0);
+                    p, b->flags | M_EN_PASSANT_FLAG);
                 goto do_flags;
             }
         }
@@ -845,12 +896,12 @@ U64* test_move_w_flags(bitboard* b, piece_bitboards* us, piece_bitboards* them, 
     }
     if ((&us->kings == moving_piece) && (ABS(p.end_square - p.start_square) == 2)) { // meaning its castling
             add_to_move_stack(b, &us->kings, &us->rooks, b->double_move_square,
-            p.start_square, p.end_square, b->flags | M_CASTLE_FLAG, 0);
+            p, b->flags | M_CASTLE_FLAG);
     }
     else {
         destroy_piece = find_piece_on_pb(them, p.end_square);
         add_to_move_stack(b, moving_piece, destroy_piece, b->double_move_square,
-            p.start_square, p.end_square, b->flags, 0);
+            p, b->flags);
     }
     do_flags:
         do_flags_for_move(b, us, p);
@@ -863,31 +914,33 @@ U64* test_move_w_flags(bitboard* b, piece_bitboards* us, piece_bitboards* them, 
             printf("oops! move is null! what do we do?");
             exit(1);
         }
-        move_piece(m);
+        move_piece(m, us);
         return destroy_piece;
 }
 
-void unmove_piece(bitboard* b) {
+void unmove_piece(bitboard* b, piece_bitboards* old_us) {
     move* m = &(b->move_stack[b->ply_size-1]);
     if (m == NULL) {
         fprintf(stderr, "M IS NULL!! WHAT DO WE DO?");
         exit(1);
     }
+    U8 start_square = m->p.start_square;
+    U8 end_square = m->p.end_square;
     if (m->old_flags & M_CASTLE_FLAG) { // if its castle
         if (m->old_flags & TURN_FLAG) {
-            if (m->p.start_square < m->p.end_square) { // if castling to the right
-                move_piece_direct(m->destroyed_piece, m->p.end_square - 1, R_BK_IND); // move rook
+            if (start_square < end_square) { // if castling to the right
+                move_piece_direct(m->destroyed_piece, end_square - 1, R_BK_IND); // move rook
             }
             else {
-                move_piece_direct(m->destroyed_piece, m->p.end_square + 1, R_BQ_IND);
+                move_piece_direct(m->destroyed_piece,  end_square + 1, R_BQ_IND);
             }
         }
         else {
-            if (m->p.start_square < m->p.end_square) {
-                move_piece_direct(m->destroyed_piece, m->p.end_square - 1, R_WK_IND); // move rook
+            if (start_square < end_square) {
+                move_piece_direct(m->destroyed_piece, end_square - 1, R_WK_IND); // move rook
             }
             else {
-                move_piece_direct(m->destroyed_piece, m->p.end_square + 1, R_WQ_IND);
+                move_piece_direct(m->destroyed_piece, end_square + 1, R_WQ_IND);
             }
         }
     }
@@ -901,12 +954,21 @@ void unmove_piece(bitboard* b) {
         }
     }
     else {
+        U64* piece = GET_PP_PIECE(old_us, m->p.pp_flag);
+        if (piece != NULL) {
+            if (m->destroyed_piece != NULL) {
+                //printf("unmoving piece!\n");
+                unremove_opponent_piece(m->destroyed_piece, end_square);
+            }
+            unremove_opponent_piece(m->moved_piece, start_square);
+            *piece &= ~(1ULL << end_square);
+            b->ply_size--;
+            b->flags = (m->old_flags & ~(M_EN_PASSANT_FLAG | M_CASTLE_FLAG)); // reset the flags to whatever was set before the move
+            return;
+        }
         if (m->destroyed_piece != NULL) {
             //printf("unmoving piece!\n");
-            unremove_opponent_piece(m->destroyed_piece, m->p.end_square);
-        }
-        else {
-           // printf("eating empyt square!\n");
+            unremove_opponent_piece(m->destroyed_piece, end_square);
         }
         b->double_move_square = m->ep_square; // set the double move square back to what it originally was
     }
@@ -955,6 +1017,11 @@ U8 make_move(bitboard* b) {
         ///
         /// TEMPORARILY MOVE THIS DIRECTION BEFORE CEHCKING IF CHECKED
         ///
+        if (moving_piece == &us->pawns && ((end_square < 8 && us == &b->black) || (end_square > 55 && us == &b->white))) {
+            if (b->p.pp_flag < 1 || b->p.pp_flag > 4) {
+                b->waiting_for_pawn_promote = 1;
+            }
+        }
         U64* destroy_piece = test_move_w_flags(b, us, them, b->p, moving_piece);
         // temporary reset the board alls and attack moves to cehck if we are checked
         reset_board_all(b);
@@ -970,7 +1037,7 @@ U8 make_move(bitboard* b) {
         if (bool_is_checked) {
            // print_u64(result);
             fprintf(stderr, "Can't move there, as that puts your king in danger!\n");
-            unmove_piece(b);
+            unmove_piece(b, us);
             reset_board_all(b);
             return 0;
         }
@@ -1033,7 +1100,10 @@ int8_t set_board_new_pos(bitboard* b, const char input[5]) {
     return 1;
 }
 
-
+void promote_pawn(U64* pawn, U64* target_piece, board_move_pos move) {
+    remove_opponent_piece(pawn, move.end_square); // first remove the pawn
+    *target_piece |= 1ULL << move.end_square;
+}
 
 void print_all_valid_moves(bitboard* b, U8 s) {
     piece_bitboards* us;

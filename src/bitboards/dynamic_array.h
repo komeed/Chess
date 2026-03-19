@@ -14,10 +14,9 @@
 #include "typedefs.h"
 
 typedef struct {
-    I8 start_square : 7;
-    I8 end_square : 7;
-    //U8 pp_flag : 3;
-    //I8 null_flag;
+    U8 start_square : 6;
+    U8 end_square : 6;
+    U8 pp_flag : 4;
 } board_move_pos;
 
 typedef struct {

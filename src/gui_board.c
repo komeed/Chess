@@ -11,7 +11,7 @@ gui_board init_board(bishop_rays* b_rays, rook_rays* r_rays) {
     board.bitboard = init_board_bitboards(b_rays, r_rays, 1);
     //board.held_piece = NULL;
     board.held_bit_piece = NULL;
-    board.held_piece_pos = (board_move_pos) {-1, -1};
+    board.held_piece_pos = (board_move_pos) {-1, -1, 0};
     board.top_color = COLOR_BLACK;
     board.bottom_color = COLOR_WHITE;
     return board;
@@ -23,15 +23,21 @@ bool move_piece_on_board(gui_board* board, board_move_pos m) {
         return false;
     }
     board->bitboard.p = m;
-    if (!make_move(&board->bitboard)) {
+    if (board->bitboard.waiting_for_pawn_promote || !make_move(&board->bitboard)) {
         board->held_bit_piece = NULL;
         return false;
     }
+    if (board->bitboard.waiting_for_pawn_promote) {
+        board->bitboard.flags ^= TURN_FLAG;
+        return true;
+    }
    // board_move_trace trace = mm_find_next_move_trace(&board->bitboard);
    // print_board_move_trace(&trace);
-    board_move_pos p = mm_find_next_pos(&board->bitboard);
-    board->bitboard.p = p;
-    make_move(&board->bitboard);
+    if (board->bitboard.use_minimax_on_black) {
+        board_move_pos p = mm_find_next_pos(&board->bitboard);
+        board->bitboard.p = p;
+        make_move(&board->bitboard);
+    }
     print_bitboard(&board->bitboard);
     board->held_bit_piece = NULL;
    /* U64* temp_piece = board->held_bit_piece;

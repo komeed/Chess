@@ -33,9 +33,19 @@ static bm_pos_w_score find_all_possible_board_moves(bitboard* b, piece_bitboards
             result &= ~us->all;
             while (result) {
                 I8 end_sq = (I8) __builtin_ctzll(result);
-                const board_move_pos move_pos = {i, end_sq};
-                I32 score = lightweight_eval(us, them, move_pos, moving_piece);
-                add_legal_board_move_with_score(l_moves, move_pos, score, moving_piece);
+                board_move_pos move_pos = {i, end_sq, 0};
+                if (moving_piece == &us->pawns && ((end_sq < 8 && us == &b->black) || (end_sq > 55 && us == &b->white))) {
+                    for (int j = 1; j < 5; j++) {
+                        move_pos.pp_flag = j;
+                        I32 score = GET_PP_SCORE(j);
+                        score -= PAWN_SCORE;
+                        add_legal_board_move_with_score(l_moves, move_pos, score, moving_piece);
+                    }
+                }
+                else {
+                    I32 score = lightweight_eval(us, them, move_pos, moving_piece);
+                    add_legal_board_move_with_score(l_moves, move_pos, score, moving_piece);
+                }
                 result &= result - 1;
             }
         }
@@ -65,7 +75,7 @@ static bm_pos_w_score find_all_possible_board_moves(bitboard* b, piece_bitboards
                     max_pos.s = ps.s;
                     max_pos.p = pos->p;
                     if (alpha >= beta) {
-                        unmove_piece(b);
+                        unmove_piece(b, us);
                         reset_board_all(b);
                         break;
                     }
@@ -78,42 +88,33 @@ static bm_pos_w_score find_all_possible_board_moves(bitboard* b, piece_bitboards
                     max_pos.p = pos->p;
                     if (beta <= alpha) {
                         //prune the rest
-                        unmove_piece(b);
+                        unmove_piece(b, us);
                         reset_board_all(b);
                         break;
                     }
                 }
             }
         }
-        unmove_piece(b);
+        unmove_piece(b, us);
         reset_board_all(b);
-        result &= result - 1;
     }
     // also means we are max
     if (max_pos.s == INT32_MIN) {
         //if they are currently attacking us, we got checkmated
         if (us->kings & them->attacking) {
-            return (bm_pos_w_score) {
-                (board_move_pos) {},
-                -CHECKMATE_SCORE};
+            return (bm_pos_w_score) { .s = -CHECKMATE_SCORE + (MAX_PLY - depth)};
         }
         //otherwise, it's stalemate
         else {
-            return (bm_pos_w_score) {
-                (board_move_pos) {},
-                0};
+            return (bm_pos_w_score) {.s = 0};
         }
     }
     else if (max_pos.s == INT32_MAX) {
             if (us->kings & them->attacking) {
-                return (bm_pos_w_score) {
-                    (board_move_pos) {},
-                    CHECKMATE_SCORE};
+                return (bm_pos_w_score) {.s = CHECKMATE_SCORE - (MAX_PLY - depth)};
             }
             else {
-                return (bm_pos_w_score) {
-                    (board_move_pos) {},
-                    0};
+                return (bm_pos_w_score) {.s = 0};
             }
         }
     return max_pos;
@@ -126,8 +127,6 @@ static board_move_trace find_board_move_trace(bitboard* b, piece_bitboards* us, 
     find_all_attacking_pieces(b);
     U64* moving_piece = NULL;
     U64 result = 0;
-    U64 us_attacking = us->attacking;
-    U64 them_attacking = them->attacking;
     bm_pos_w_score max_pos;
     board_move_trace trace;
     trace.size = 0;
@@ -182,7 +181,7 @@ static board_move_trace find_board_move_trace(bitboard* b, piece_bitboards* us, 
                     max_pos.p = pos->p;
                     if (beta <= alpha) {
                         //prune the rest
-                        unmove_piece(b);
+                        unmove_piece(b, us);
                         reset_board_all(b);
                         break;
                     }
@@ -196,7 +195,7 @@ static board_move_trace find_board_move_trace(bitboard* b, piece_bitboards* us, 
                     max_pos.p = pos->p;
                     if (beta <= alpha) {
                         //prune the rest
-                        unmove_piece(b);
+                        unmove_piece(b, us);
                         reset_board_all(b);
                         break;
                     }
@@ -204,7 +203,7 @@ static board_move_trace find_board_move_trace(bitboard* b, piece_bitboards* us, 
                 }
             }
         }
-        unmove_piece(b);
+        unmove_piece(b, us);
         reset_board_all(b);
     }
     // also means we are max
@@ -291,9 +290,7 @@ bm_pos_w_score mm_recurse_helper(bitboard* b, piece_bitboards* us, piece_bitboar
         else {
             score = compute_HCE(them, us);
         }
-        return (bm_pos_w_score) {
-            (board_move_pos) {},
-            score};
+        return (bm_pos_w_score) {.s = score};
     }
     return find_all_possible_board_moves(b, us, them, alpha, beta, is_max, depth);
 }

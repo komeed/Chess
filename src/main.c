@@ -47,6 +47,7 @@ int main(void) {
     glfwMakeContextCurrent(window);
 
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetKeyCallback(window, key_callback);
     //glfwSetWindowAspectRatio(window, 1, 1);
 
     // 3. Load OpenGL functions with GLAD

@@ -63,6 +63,11 @@ void add_board_to_rq(RenderQueue *q, gui_board *board);
 bool get_board_pos(RenderQueue *q, double x, double y, board_move_pos *p);
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void key_callback(GLFWwindow* window,
+                  int key,
+                  int scancode,
+                  int action,
+                  int mods);
 
 void update_board_to_rq(RenderQueue *q);
 

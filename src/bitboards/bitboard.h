@@ -34,8 +34,8 @@
 //whichever one is on is the one that it's promoting to
 #define M_PP_Q 0b00000001
 #define M_PP_R 0b00000010
-#define M_PP_B 0b00000100
-#define M_PP_N 0b00001000
+#define M_PP_B 0b00000011
+#define M_PP_N 0b00000100
 
 // CHECKED 0b1
 
@@ -56,6 +56,10 @@
 
 #define SWITCH_TURN(b) ((b)->flags ^= TURN_FLAG)
 
+#define GET_PP_PIECE(us, i) ( \
+((i) > 4 || (i) < 1) ? NULL : (us)->promo_table[(i) - 1] \
+)
+
 typedef struct {
     U64 pawns;
     U64 rooks;
@@ -66,6 +70,8 @@ typedef struct {
 
     U64 all; // unified pieces
     U64 attacking; // pieces that are attacking (able to attack)
+
+    U64* promo_table[4];
 } piece_bitboards;
 
 typedef struct {
@@ -75,7 +81,6 @@ typedef struct {
     //also acts as the double move square when it's not en passant
     board_move_pos p;
     U8 old_flags;
-    U8 pawn_promote_flags;
 } move;
 
 typedef struct {
@@ -103,6 +108,9 @@ typedef struct {
     //scores_for_legal_moves* l_moves;
     U8 use_ab_pruning;
     I32 count;
+
+    U8 waiting_for_pawn_promote;
+    U8 use_minimax_on_black;
 } bitboard;
 
 //TODO: don't pass them, make it optimized
@@ -125,10 +133,9 @@ int8_t set_board_new_pos(bitboard* b, const char input[5]);
 
 bitboard init_board_bitboards(bishop_rays* b_rays, rook_rays* r_rays, U8 use_minimax);
 
-void add_to_move_stack(bitboard* b, U64* moved_piece, U64* destroyed_piece, U8 ep_square, U8 start_square,
-    U8 end_square, U8 flags, U8 pawn_promote_flags);
+void add_to_move_stack(bitboard* b, U64* moved_piece, U64* destroyed_piece, U8 ep_square, board_move_pos move_pos, U8 flags);
 
-void unmove_piece(bitboard* b);
+void unmove_piece(bitboard* b, piece_bitboards* old_us);
 
 U64* test_move_w_flags(bitboard* b, piece_bitboards* us, piece_bitboards* them, board_move_pos p, U64* moving_piece);
 
@@ -141,6 +148,8 @@ void print_all_valid_moves(bitboard* b, U8 s);
 void print_u64(U64 x);
 
 U8 make_move(bitboard* b);
+
+void promote_pawn(U64* pawn, U64* target_piece, board_move_pos move);
 
 inline U8 is_white_turn(bitboard* b) { return !(b->flags & TURN_FLAG);}
 #endif //BITBOARD_H

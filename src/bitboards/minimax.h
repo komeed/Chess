@@ -32,6 +32,11 @@
 (piece_ptr) == &((side)->queens)  ? QUEEN_SCORE : \
 (piece_ptr) == &((side)->kings)   ? KING_SCORE : 0 )
 
+#define GET_PP_SCORE(i) ( \
+((i) == M_PP_Q) ? QUEEN_SCORE : \
+((i) == M_PP_B) ? BISHOP_SCORE : \
+((i) == M_PP_N) ? KNIGHT_SCORE : \
+ROOK_SCORE )
 
 void add_mm_best_board_moves(board_move_pos p);
 
