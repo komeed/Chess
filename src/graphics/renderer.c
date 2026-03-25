@@ -521,25 +521,26 @@ void key_callback(GLFWwindow* window,
             if (b->flags & TURN_FLAG) {
                 us = &b->black;
             }
-            if (key == GLFW_KEY_Q) {
-                promote_pawn(&us->pawns, &us->queens, b->p);
+            if (key == GLFW_KEY_Q || key == GLFW_KEY_R || key == GLFW_KEY_B || key == GLFW_KEY_N) {
+                if (key == GLFW_KEY_Q) {
+                    promote_pawn(&us->pawns, &us->queens, b->p);
+                }
+                else if (key == GLFW_KEY_R) {
+                    promote_pawn(&us->pawns, &us->rooks, b->p);
+                }
+                else if (key == GLFW_KEY_B) {
+                    promote_pawn(&us->pawns, &us->bishops, b->p);
+                }
+                else if (key == GLFW_KEY_N) {
+                    promote_pawn(&us->pawns, &us->knights, b->p);
+                }
                 b->waiting_for_pawn_promote = 0;
                 b->flags ^= TURN_FLAG;
-            }
-            else if (key == GLFW_KEY_R) {
-                promote_pawn(&us->pawns, &us->rooks, b->p);
-                b->waiting_for_pawn_promote = 0;
-                b->flags ^= TURN_FLAG;
-            }
-            else if (key == GLFW_KEY_B) {
-                promote_pawn(&us->pawns, &us->bishops, b->p);
-                b->waiting_for_pawn_promote = 0;
-                b->flags ^= TURN_FLAG;
-            }
-            else if (key == GLFW_KEY_N) {
-                promote_pawn(&us->pawns, &us->knights, b->p);
-                b->waiting_for_pawn_promote = 0;
-                b->flags ^= TURN_FLAG;
+                bm_pos_w_score ps = mm_find_next_pos(b);
+                print_bm_w_score(ps);
+                b->p = ps.p;
+                make_move(b);
+                print_bitboard(b);
             }
         }
     }

@@ -49,13 +49,13 @@ I32 compute_board_score(const bitboard* b, const piece_bitboards* us, const piec
 void print_board_move_pos(board_move_pos p);
 
 bm_pos_w_score mm_recurse_helper(bitboard* b, piece_bitboards* us, piece_bitboards* them,
-    int alpha, int beta, U8 is_max, U8 depth);
+    int alpha, int beta, U8 is_max, U8 depth, I32 inc_score);
 
 board_move_trace mm_recurse_helper_trace(bitboard* b, piece_bitboards* us, piece_bitboards* them,
     int alpha, int beta, U8 is_max, U8 depth);
 
 board_move_trace mm_find_next_move_trace(bitboard* b);
-I32 lightweight_eval(const piece_bitboards* us, const piece_bitboards* them, board_move_pos p, const U64* moving_piece);
+I32 lightweight_eval(const bitboard* b, const piece_bitboards* us, const piece_bitboards* them, board_move_pos p);
 void print_board_move_trace(board_move_trace* ps);
 void print_bm_w_score(bm_pos_w_score ps);
 

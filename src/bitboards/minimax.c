@@ -23,7 +23,7 @@ score += ((mirror) ? (pst)[MIRROR_PST[sq]] : (pst)[sq]) * (sign); \
 #define CLEAR_MM_BOARD_MOVES(a) ((a)->size = 0)
 
 static bm_pos_w_score find_all_possible_board_moves(bitboard* b, piece_bitboards* us, piece_bitboards* them,
-    int alpha, int beta, U8 is_max, U8 depth) {
+    int alpha, int beta, U8 is_max, U8 depth, I32 inc_score) {
     find_all_attacking_pieces(b);
 
     U64* moving_piece = NULL;
@@ -44,11 +44,12 @@ static bm_pos_w_score find_all_possible_board_moves(bitboard* b, piece_bitboards
             while (result) {
                 I8 end_sq = (I8) __builtin_ctzll(result);
                 board_move_pos move_pos = {i, end_sq, 0};
-                I32 light_score = lightweight_eval(us, them, move_pos, moving_piece);
+                I32 light_score = lightweight_eval(b, us, them, move_pos);
                 if (moving_piece == &us->pawns && ((end_sq < 8 && us == &b->black) || (end_sq > 55 && us == &b->white))) {
                     for (int j = 1; j < 5; j++) {
                         move_pos.pp_flag = j;
-                        I32 score = GET_PP_SCORE(j) + light_score;
+                        //TODO: just so we know, this is excluding the pawn being removed (shoudln't matter and honestly helps but wtver)
+                        I32 score = (GET_PP_SCORE(j)) + light_score;
                         add_legal_board_move_with_score(l_moves, move_pos, score, moving_piece);
                     }
                 }
@@ -77,7 +78,7 @@ static bm_pos_w_score find_all_possible_board_moves(bitboard* b, piece_bitboards
         reset_board_all(b);
         if (!is_attacking_our_king(b, us, them)) { // if they are not still attacking our king (legal move)
            // b->count++;
-            bm_pos_w_score ps = mm_recurse_helper(b, them, us, alpha, beta, !is_max, depth - 1);
+            bm_pos_w_score ps = mm_recurse_helper(b, them, us, alpha, beta, !is_max, depth - 1, ((is_max ? 1 : -1) * pos->s) + inc_score);
             if (is_max) {
                 if (ps.s > max_pos.s) {
                     alpha = ps.s;
@@ -157,7 +158,7 @@ static board_move_trace find_board_move_trace(bitboard* b, piece_bitboards* us, 
             while (result) {
                 I8 end_sq = (I8) __builtin_ctzll(result);
                 const board_move_pos move_pos = {i, end_sq};
-                I32 score = lightweight_eval(us, them, move_pos, moving_piece);
+                I32 score = lightweight_eval(b, us, them, move_pos);
                 add_legal_board_move_with_score(l_moves, move_pos, score, moving_piece);
                 result &= result - 1;
             }
@@ -252,7 +253,7 @@ bm_pos_w_score mm_find_next_pos(bitboard* b) {
         them = &b->white;
     }
    // b->l_moves = init_scores_w_legal_moves();
-    bm_pos_w_score pos = mm_recurse_helper(b, us, them, INT32_MIN, INT32_MAX, 1, MAX_PLY);
+    bm_pos_w_score pos = mm_recurse_helper(b, us, them, INT32_MIN, INT32_MAX, 1, MAX_PLY, 0);
    // SAFE_FREE(b->l_moves);
     return pos;
 }
@@ -295,18 +296,19 @@ void print_board_move_trace(board_move_trace* ps) {
 }
 
 bm_pos_w_score mm_recurse_helper(bitboard* b, piece_bitboards* us, piece_bitboards* them,
-    int alpha, int beta, U8 is_max, U8 depth) {
+    int alpha, int beta, U8 is_max, U8 depth, I32 inc_score) {
     if (depth == 0) {
-        int score = 0;
+        /*int score = 0;
         if (is_max) {
             score = compute_board_score(b, us, them);
         }
         else {
             score = compute_board_score(b, them, us);
         }
-        return (bm_pos_w_score) {.s = score};
+        return (bm_pos_w_score) {.s = score};*/
+        return (bm_pos_w_score) {.s = inc_score};
     }
-    return find_all_possible_board_moves(b, us, them, alpha, beta, is_max, depth);
+    return find_all_possible_board_moves(b, us, them, alpha, beta, is_max, depth, inc_score);
 }
 
 board_move_trace mm_recurse_helper_trace(bitboard* b, piece_bitboards* us, piece_bitboards* them,
@@ -326,11 +328,57 @@ board_move_trace mm_recurse_helper_trace(bitboard* b, piece_bitboards* us, piece
     return find_board_move_trace(b, us, them, alpha, beta, is_max, depth);
 }
 
-I32 lightweight_eval(const piece_bitboards* us, const piece_bitboards* them, board_move_pos p, const U64* moving_piece) {
-    U64 end = 1ULL << p.end_square;
-    I32 victim_score = GET_PIECE_SCORE(end, them);
-    I32 attacker_score = GET_PIECE_SCORE_FROM_PTR(moving_piece, us);
-    I32 final_score = (victim_score * 10) - attacker_score;
+static inline I32 get_piece_score_with_pst(U8 end_square, const piece_bitboards* them, U8 mirror_flag) {
+    U64 end_bb = 1ULL << end_square;
+
+    // Apply mirroring if needed
+    int sq = end_square;
+    if (mirror_flag) {
+        sq = MIRROR_PST[sq];
+    }
+
+    // Check which piece occupies the square and return score + PST
+    if (end_bb & them->pawns)   return PAWN_SCORE   + PAWN_PST[sq];
+    if (end_bb & them->knights) return KNIGHT_SCORE + KNIGHT_PST[sq];
+    if (end_bb & them->bishops) return BISHOP_SCORE + BISHOP_PST[sq];
+    if (end_bb & them->rooks)   return ROOK_SCORE   + ROOK_PST[sq];
+    if (end_bb & them->queens)  return QUEEN_SCORE  + QUEEN_PST[sq];
+/*
+    if (end_bb & them->pawns)   return PAWN_SCORE   ;
+    if (end_bb & them->knights) return KNIGHT_SCORE ;
+    if (end_bb & them->bishops) return BISHOP_SCORE ;
+    if (end_bb & them->rooks)   return ROOK_SCORE   ;
+    if (end_bb & them->queens)  return QUEEN_SCORE ;*/
+
+    return 0; // empty square
+}
+
+static inline I32 get_piece_score_with_only_pst(board_move_pos p, const piece_bitboards* us, U8 mirror_flag) {
+    U64 start_bb = 1ULL << p.start_square;
+
+    // Determine which square indices to use, applying mirror if needed
+    int start_sq = p.start_square;
+    int end_sq   = p.end_square;
+    if (mirror_flag) {
+        start_sq = MIRROR_PST[start_sq];
+        end_sq   = MIRROR_PST[end_sq];
+    }
+
+    // Determine which piece type is moving
+    if (start_bb & us->pawns)   return PAWN_PST[end_sq]   - PAWN_PST[start_sq];
+    if (start_bb & us->knights) return KNIGHT_PST[end_sq] - KNIGHT_PST[start_sq];
+    if (start_bb & us->bishops) return BISHOP_PST[end_sq] - BISHOP_PST[start_sq];
+    if (start_bb & us->rooks)   return ROOK_PST[end_sq]   - ROOK_PST[start_sq];
+    if (start_bb & us->queens)  return QUEEN_PST[end_sq]  - QUEEN_PST[start_sq];
+    return 0; // should not happen unless start square is empty
+}
+
+I32 lightweight_eval(const bitboard* b, const piece_bitboards* us, const piece_bitboards* them, board_move_pos p) {
+    //calculate the lightweight score of the capture
+    int mirror_flag = b->flags & TURN_FLAG;
+    I32 final_score = get_piece_score_with_pst(p.end_square, them, mirror_flag);
+    //then, calculate the lightweight score of the movement (pst only)
+    final_score += get_piece_score_with_only_pst(p, us, mirror_flag);
     return final_score;
 }
 
