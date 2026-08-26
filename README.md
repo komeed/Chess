@@ -6,7 +6,7 @@
 
 ## Introduction:
 
-Hello! This was a year-long project I worked on from my junior to senior year of high school. I wanted a project to build and strengthen my C coding skills, so I built this! 
+Hello! This was a 4 month long project I worked on in the second semester of my senior year of high school. I wanted a project to build and strengthen my C coding skills, so I built this! 
 
 ---
 
