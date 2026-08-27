@@ -6,7 +6,7 @@
 
 ## Introduction:
 
-Hello! This was a 4 month long project I worked on in the second semester of my senior year of high school. I wanted a project to build and strengthen my C coding skills, so I built this! 
+Hello! This was a 3 month long project I worked on in the second semester of my senior year of high school. I wanted a project to build and strengthen my C coding skills, so I built this! (I was also extremely bored)
 Also, I kind of screwed up with merging Chess and ChessEngine as the commits aren't visible here. All the commits for the actual bot are on ChessEngine.
 
 ---
